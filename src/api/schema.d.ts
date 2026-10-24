@@ -1537,7 +1537,8 @@ export interface paths {
         };
         /**
          * Fees collected
-         * @description The dashboard's money tiles.
+         * @description The dashboard's money tiles, read against `as_of` — today by default,
+         *     and the same day the arrears list beneath them is read against.
          */
         get: operations["collection_api_v1_fees_collection_get"];
         put?: never;
@@ -1587,6 +1588,29 @@ export interface paths {
          *     guessing an invoice for it is how a month-end stops balancing.
          */
         get: operations["suspense_api_v1_payments_suspense_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payments/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The money that came in
+         * @description The dashboard's second card, newest first.
+         *
+         *     Reversed payments are left out: a reversal is not a receipt, and a feed
+         *     that showed one would have a bursar chasing money that was already undone.
+         */
+        get: operations["recent_api_v1_payments_recent_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2058,6 +2082,8 @@ export interface components {
             overdue: string;
             /** Students In Arrears */
             students_in_arrears: number;
+            /** Students Over 60 Days */
+            students_over_60_days: number;
             /** Collected Percent */
             collected_percent: number;
         };
@@ -3350,6 +3376,46 @@ export interface components {
             deposit_settled: string | null;
             /** Documents Held */
             documents_held: number;
+        };
+        /**
+         * RecentPayment
+         * @description One line of the dashboard's "Payments received" card.
+         *
+         *     Carries the child and the class rather than the invoice reference: a bursar
+         *     recognises "Neema Mwanjala, Standard 4 Blue" and recognises nothing at all
+         *     about INV/Term1/0184.
+         */
+        RecentPayment: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Amount */
+            amount: string;
+            /** Applied */
+            applied: string;
+            /** Channel */
+            channel: string;
+            /** External Ref */
+            external_ref: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Is Manual */
+            is_manual: boolean;
+            /** Invoice Id */
+            invoice_id: string | null;
+            /** Reference */
+            reference: string | null;
+            /** Student Id */
+            student_id: string | null;
+            /** Student Name */
+            student_name: string | null;
+            /** Class Name */
+            class_name: string | null;
         };
         /**
          * RecordPaymentRequest
@@ -7006,6 +7072,7 @@ export interface operations {
         parameters: {
             query?: {
                 academic_year_id?: string | null;
+                as_of?: string | null;
             };
             header?: {
                 authorization?: string | null;
@@ -7090,6 +7157,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SuspensePayment"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recent_api_v1_payments_recent_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecentPayment"][];
                 };
             };
             /** @description Validation Error */

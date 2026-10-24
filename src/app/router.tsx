@@ -19,6 +19,7 @@ import { RequireAuth } from '@/features/auth/RequireAuth';
  */
 const AppShell = lazy(() => import('@/app/AppShell'));
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
+const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
 
 export const router = createBrowserRouter([
   {
@@ -28,15 +29,7 @@ export const router = createBrowserRouter([
       {
         element: <AppShell />,
         children: [
-          {
-            index: true,
-            element: (
-              <PlaceholderPage
-                title="Dashboard"
-                note="The tiles, the attention list and the admissions funnel land here."
-              />
-            ),
-          },
+          { index: true, element: <DashboardPage /> },
           {
             path: 'students',
             element: <PlaceholderPage title="Students" note="The roll and the review queue." />,
