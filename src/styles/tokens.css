@@ -1,0 +1,77 @@
+@import 'tailwindcss';
+
+/* Design tokens. These are the values the Phase 1 screens were drawn with.
+   The lime #86E714 is the BeyondSchools brand green but fails contrast as a
+   text or button fill (white on it is about 2.3:1), so it stays an accent and
+   --brand-strong does the work wherever text sits on top. */
+
+@theme {
+  --color-brand: #22c55e;
+  --color-brand-strong: #15803d;
+  --color-brand-ink: #14532d;
+  --color-brand-soft: #f0fdf4;
+  --color-brand-lime: #86e714;
+
+  --color-ink: #0f172a;
+  --color-ink-soft: #334155;
+  --color-ink-dim: #475569;
+  --color-muted: #64748b;
+  --color-faint: #94a3b8;
+  --color-line: #e2e8f0;
+  --color-line-soft: #f1f5f9;
+  --color-canvas: #f6f8f7;
+
+  --color-ok-bg: #dcfce7;
+  --color-ok-ink: #166534;
+  --color-warn-bg: #fef3c7;
+  --color-warn-ink: #92400e;
+  --color-bad-bg: #fee2e2;
+  --color-bad-ink: #991b1b;
+  --color-info-bg: #dbeafe;
+  --color-info-ink: #1e40af;
+
+  --font-display: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 12px;
+  --radius-control: 8px;
+}
+
+html {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  /* iOS zooms any input under 16px, which reads as the app being broken. */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+/* Every interactive target clears 44px: most guardians are on a phone. */
+button,
+[role='button'],
+a.btn,
+input,
+select {
+  min-height: 44px;
+}
+
+/* One focus treatment everywhere, and never none: a bursar doing data entry
+   works down a form on the keyboard, and losing the caret costs more time than
+   an outline costs in looks. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-brand-strong);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

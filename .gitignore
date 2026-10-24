@@ -1,0 +1,17 @@
+node_modules/
+dist/
+dist-ssr/
+coverage/
+.env
+.env.*
+!.env.example
+*.local
+.DS_Store
+.vite/
+playwright-report/
+test-results/
+# src/api/schema.d.ts is generated from the API's openapi.json by `npm run types`,
+# and is committed: CI and a fresh clone must typecheck without the sibling
+# repo checked out beside this one, and a diff in it is how an API change shows
+# up in review.
+*.tsbuildinfo

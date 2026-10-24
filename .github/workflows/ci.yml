@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push: { branches: [main] }
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+
+      # The layering rules live in eslint.config.js and are errors, not
+      # warnings, so this step is what stops logic drifting into components.
+      - name: Lint and layering
+        run: npm run lint
+
+      - name: Types
+        run: npm run typecheck
+      - name: Tests
+        run: npm run test
+      - name: Build
+        run: npm run build

@@ -1,0 +1,12 @@
+name: bs-sms-web
+
+services:
+  web:
+    build:
+      context: .
+      target: dev
+    env_file: [.env]
+    volumes:
+      - ./:/srv
+      - /srv/node_modules
+    ports: ["5173:5173"]
