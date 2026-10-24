@@ -40,6 +40,8 @@ interface Props<Row> {
   readonly onRowClick?: (row: Row) => void;
   readonly empty?: ReactNode;
   readonly loading?: boolean;
+  /** Tints the header row, as the roll does and the dashboard's table does not. */
+  readonly tintHeader?: boolean;
 }
 
 const headCell =
@@ -55,6 +57,7 @@ export function DataTable<Row>({
   onRowClick,
   empty,
   loading = false,
+  tintHeader = false,
 }: Props<Row>) {
   if (loading) return <TableSkeleton columns={columns.length} />;
   if (rows.length === 0 && empty) return <>{empty}</>;
@@ -69,12 +72,14 @@ export function DataTable<Row>({
         {caption}
       </caption>
       <thead>
-        <tr>
+        <tr className={tintHeader ? 'bg-canvas' : undefined}>
           {columns.map((column) => (
             <th
               key={column.key}
               scope="col"
-              className={`${headCell} ${column.align === 'right' ? 'text-right' : ''}`}
+              className={`${headCell} ${tintHeader ? 'border-t border-line px-3.5 py-2.5' : ''} ${
+                column.align === 'right' ? 'text-right' : ''
+              }`}
             >
               {column.header.toUpperCase()}
             </th>
