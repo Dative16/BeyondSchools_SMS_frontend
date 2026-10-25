@@ -22,6 +22,7 @@ const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
 const StudentsPage = lazy(() => import('@/features/students/StudentsPage'));
 const StudentPage = lazy(() => import('@/features/students/StudentPage'));
+const ApplyPage = lazy(() => import('@/features/apply/ApplyPage'));
 
 export const router = createBrowserRouter([
   {
@@ -64,13 +65,5 @@ export const router = createBrowserRouter([
     path: '/login',
     element: <LoginPage />,
   },
-  {
-    path: '/apply',
-    element: (
-      <PlaceholderPage
-        title="Apply for a place"
-        note="The public application form. No account needed."
-      />
-    ),
-  },
+  { path: '/apply', element: <ApplyPage /> },
 ]);

@@ -1132,6 +1132,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/apply/me/documents/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Get a URL to upload a document to
+         * @description Step one of two. The parent's phone PUTs the photograph straight to
+         *     storage; the bytes never come through this API.
+         *
+         *     The best moment to get a birth certificate is while somebody is sitting
+         *     with the form open and the certificate in their hand. Every week after
+         *     that is a phone call.
+         */
+        post: operations["document_upload_url_api_v1_apply_me_documents_upload_url_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/apply/me/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm an uploaded document
+         * @description Step two. Storage is asked what actually arrived rather than trusting
+         *     what the client said it would send — a presigned PUT cannot enforce a
+         *     length, and on a 3G connection a real fraction of uploads never finish.
+         *
+         *     Answers with the whole form state, so the checklist on the parent's screen
+         *     updates without a second request.
+         */
+        post: operations["attach_document_api_v1_apply_me_documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admissions": {
         parameters: {
             query?: never;
@@ -1700,9 +1750,7 @@ export interface components {
             /** Level Name */
             level_name: string | null;
             /** Documents */
-            documents: {
-                [key: string]: unknown;
-            }[];
+            documents: components["schemas"]["ApplyDocument"][];
             /** Field Values */
             field_values: {
                 [key: string]: unknown;
@@ -1713,6 +1761,16 @@ export interface components {
             complete: boolean;
             /** Missing */
             missing: string[];
+            /**
+             * Can Submit
+             * @default false
+             */
+            can_submit: boolean;
+            /**
+             * Missing To Submit
+             * @default []
+             */
+            missing_to_submit: string[];
             /** Deposit Billed */
             deposit_billed: string | null;
             /** Deposit Settled */
@@ -1757,6 +1815,12 @@ export interface components {
             /** Guardian Email */
             guardian_email: string | null;
             guardian_relationship: components["schemas"]["Relationship"] | null;
+            /** Guardian National Id */
+            guardian_national_id?: string | null;
+            /** Guardian Address */
+            guardian_address?: string | null;
+            /** Birth Certificate No */
+            birth_certificate_no?: string | null;
             /** Admission No */
             admission_no: string | null;
             /** Offer Expires On */
@@ -1789,6 +1853,36 @@ export interface components {
             required: boolean;
             /** Done */
             done: boolean;
+        };
+        /**
+         * ApplyDocument
+         * @description One file a parent has attached.
+         *
+         *     `file_url` is the storage key and is deliberately absent: it is not a URL
+         *     anybody can open, and sending it would put an object key in a page a
+         *     stranger reaches.
+         */
+        ApplyDocument: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** File Name */
+            file_name: string | null;
+            /** Content Type */
+            content_type: string | null;
+            /** Size Bytes */
+            size_bytes: number | null;
+            /** Verified At */
+            verified_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** ApplyDocumentOption */
         ApplyDocumentOption: {
@@ -1923,9 +2017,7 @@ export interface components {
             /** Level Name */
             level_name: string | null;
             /** Documents */
-            documents: {
-                [key: string]: unknown;
-            }[];
+            documents: components["schemas"]["ApplyDocument"][];
             /** Field Values */
             field_values: {
                 [key: string]: unknown;
@@ -1936,6 +2028,16 @@ export interface components {
             complete: boolean;
             /** Missing */
             missing: string[];
+            /**
+             * Can Submit
+             * @default false
+             */
+            can_submit: boolean;
+            /**
+             * Missing To Submit
+             * @default []
+             */
+            missing_to_submit: string[];
             /** Deposit Billed */
             deposit_billed: string | null;
             /** Deposit Settled */
@@ -6379,6 +6481,76 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplyStateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    document_upload_url_api_v1_apply_me_documents_upload_url_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadTicketRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadTicketResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    attach_document_api_v1_apply_me_documents_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
