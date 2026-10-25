@@ -75,12 +75,23 @@ function detailOf(body: unknown): string | null {
   if (Array.isArray(detail)) {
     const messages = detail
       .map((item: unknown) =>
-        typeof item === 'object' && item !== null && 'msg' in item ? String(item.msg) : null,
+        typeof item === 'object' && item !== null && 'msg' in item
+          ? plainly(String(item.msg))
+          : null,
       )
       .filter((message): message is string => message !== null);
     if (messages.length > 0) return messages.join('. ');
   }
   return null;
+}
+
+/**
+ * Pydantic prefixes a custom validation message with "Value error, ". That is
+ * useful in a log and meaningless to a registrar at a desk, who should read
+ * "a date of birth cannot be in the future" and nothing else.
+ */
+function plainly(message: string): string {
+  return message.replace(/^(Value error|Assertion failed),\s*/i, '');
 }
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {

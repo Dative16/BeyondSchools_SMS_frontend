@@ -5399,7 +5399,7 @@ export interface operations {
                 status?: string | null;
                 residency?: components["schemas"]["Residency"] | null;
                 uses_transport?: boolean | null;
-                in_arrears?: boolean | null;
+                fee_status?: ("settled" | "part_paid" | "in_arrears") | null;
                 page?: number;
                 size?: number;
             };
