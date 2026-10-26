@@ -66,3 +66,98 @@ export function totalOutstanding(invoices: readonly InvoiceFacts[]): number {
 export function canAcceptPayment(invoice: InvoiceFacts): boolean {
   return !invoice.isVoid && balanceOf(invoice) > 0;
 }
+
+/**
+ * How an invoice's status reads on screen, and in what colour.
+ *
+ * The server derives the status and sends it as a string; this only maps it to
+ * words and a tone. Keeping the mapping here rather than inside a component
+ * means the pill on the list and the pill on the detail cannot disagree, which
+ * is the kind of difference that makes a bursar check both.
+ */
+export type InvoiceStatus =
+  | 'draft'
+  | 'open'
+  | 'part_paid'
+  | 'settled'
+  | 'in_arrears'
+  | 'void';
+
+export type StatusTone = 'ok' | 'warn' | 'bad' | 'info' | 'neutral';
+
+export function invoiceStatusPill(status: string): { label: string; tone: StatusTone } {
+  switch (status) {
+    case 'settled':
+      return { label: 'Settled', tone: 'ok' };
+    case 'part_paid':
+      return { label: 'Part paid', tone: 'warn' };
+    case 'in_arrears':
+      return { label: 'In arrears', tone: 'bad' };
+    case 'void':
+      return { label: 'Void', tone: 'neutral' };
+    case 'draft':
+      return { label: 'Draft', tone: 'neutral' };
+    default:
+      return { label: 'Open', tone: 'info' };
+  }
+}
+
+/**
+ * What a bursar may do to a bill, and why not when they may not.
+ *
+ * The server owns all three answers and checks them again. This exists so a
+ * disabled button can say why it is disabled, which is the difference between
+ * a screen that feels broken and one that has explained itself.
+ */
+export interface InvoiceActions {
+  readonly canRecordPayment: boolean;
+  readonly canVoid: boolean;
+  readonly canCreditNote: boolean;
+  readonly voidBlockedBecause: string | null;
+}
+
+export function actionsFor(invoice: {
+  readonly isVoid: boolean;
+  readonly billed: number;
+  readonly settled: number;
+}): InvoiceActions {
+  if (invoice.isVoid) {
+    return {
+      canRecordPayment: false,
+      canVoid: false,
+      canCreditNote: false,
+      voidBlockedBecause: 'This invoice is already void.',
+    };
+  }
+
+  const paid = invoice.settled > 0;
+  return {
+    canRecordPayment: invoice.billed > invoice.settled,
+    // Voiding a part-paid bill would leave a payment attached to something
+    // that officially does not exist, which is worse than the mistake it was
+    // meant to fix.
+    canVoid: !paid,
+    canCreditNote: invoice.billed > 0,
+    voidBlockedBecause: paid
+      ? 'Money has been paid against this bill. Write a credit note instead.'
+      : null,
+  };
+}
+
+/** How a channel reads to a person, rather than how it is stored. */
+const CHANNELS: Record<string, string> = {
+  mpesa: 'M-Pesa',
+  airtel_money: 'Airtel Money',
+  mixx: 'Mixx by Yas',
+  halopesa: 'HaloPesa',
+  bank: 'Bank transfer',
+  card: 'Card',
+  counter: 'At the counter',
+};
+
+export const channelName = (channel: string): string => CHANNELS[channel] ?? channel;
+
+export const PAYMENT_CHANNELS = Object.entries(CHANNELS).map(([value, label]) => ({
+  value,
+  label,
+}));

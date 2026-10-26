@@ -2973,8 +2973,18 @@ export interface components {
             kind: string;
             /** Student Id */
             student_id: string | null;
+            /** Admission No */
+            admission_no: string | null;
+            /** Student Name */
+            student_name: string | null;
+            /** Class Name */
+            class_name: string | null;
             /** Term Id */
             term_id: string | null;
+            /** Term Label */
+            term_label: string | null;
+            /** Academic Year */
+            academic_year: string | null;
             /**
              * Issued On
              * Format: date

@@ -23,6 +23,8 @@ const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
 const StudentsPage = lazy(() => import('@/features/students/StudentsPage'));
 const StudentPage = lazy(() => import('@/features/students/StudentPage'));
 const ApplyPage = lazy(() => import('@/features/apply/ApplyPage'));
+const FeesPage = lazy(() => import('@/features/fees/FeesPage'));
+const InvoicePage = lazy(() => import('@/features/fees/InvoicePage'));
 
 export const router = createBrowserRouter([
   {
@@ -41,21 +43,8 @@ export const router = createBrowserRouter([
               <PlaceholderPage title="Admissions" note="The review queue and the funnel." />
             ),
           },
-          {
-            path: 'fees',
-            element: (
-              <PlaceholderPage
-                title="Fees and payments"
-                note="Invoices, arrears, the term run and the suspense list."
-              />
-            ),
-          },
-          {
-            path: 'fees/:invoiceId',
-            element: (
-              <PlaceholderPage title="Invoice" note="One bill, its lines and its payments." />
-            ),
-          },
+          { path: 'fees', element: <FeesPage /> },
+          { path: 'fees/:invoiceId', element: <InvoicePage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },
