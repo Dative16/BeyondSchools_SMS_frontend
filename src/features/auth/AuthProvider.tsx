@@ -34,7 +34,11 @@ type Status = 'booting' | 'signed-in' | 'signed-out';
 interface AuthValue {
   readonly status: Status;
   readonly principal: Principal | null;
-  readonly signIn: (identifier: string, password: string) => Promise<void>;
+  readonly signIn: (
+    identifier: string,
+    password: string,
+    remember?: boolean,
+  ) => Promise<void>;
   readonly signInWithCode: (phone: string, code: string) => Promise<void>;
   readonly signOut: () => Promise<void>;
   /** Whether this account may do something, as the server told us at sign-in.
@@ -99,8 +103,8 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     return {
       status,
       principal: session?.principal ?? null,
-      signIn: async (identifier, password) => {
-        adopt(await auth.login(identifier, password));
+      signIn: async (identifier, password, remember = true) => {
+        adopt(await auth.login(identifier, password, remember));
       },
       signInWithCode: async (phone, code) => {
         adopt(await auth.loginWithOtp(phone, code));

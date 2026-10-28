@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  looksLikePhone,
-  missingInWords,
-  normalisePhone,
-  stepFor,
-  timeLeft,
-} from '@/domain/apply';
+import { missingInWords, stepFor, timeLeft } from '@/domain/apply';
+import { looksLikePhone, normalisePhone } from '@/domain/phone';
 
 describe('a phone number as people actually write it', () => {
   it('accepts the six forms of the same number', () => {

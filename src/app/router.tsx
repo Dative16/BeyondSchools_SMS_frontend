@@ -19,6 +19,8 @@ import { RequireAuth } from '@/features/auth/RequireAuth';
  */
 const AppShell = lazy(() => import('@/app/AppShell'));
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
+const SetPasswordPage = lazy(() => import('@/features/auth/SetPasswordPage'));
+const ForgotPasswordPage = lazy(() => import('@/features/auth/ForgotPasswordPage'));
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
 const StudentsPage = lazy(() => import('@/features/students/StudentsPage'));
 const StudentPage = lazy(() => import('@/features/students/StudentPage'));
@@ -50,9 +52,11 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  {
-    path: '/login',
-    element: <LoginPage />,
-  },
+  { path: '/login', element: <LoginPage /> },
+  // The two ways in for somebody who has no password: one who never had one,
+  // and one who has forgotten it. Both are reached without an account, so
+  // they sit outside the guard with the login page.
+  { path: '/set-password', element: <SetPasswordPage /> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/apply', element: <ApplyPage /> },
 ]);

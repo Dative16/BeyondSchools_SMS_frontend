@@ -31,11 +31,20 @@ const sessionFrom = (token: TokenResponse): Session => {
 /** The school on this subdomain, for the login page. No account needed. */
 export const fetchBranding = (): Promise<SchoolBrand> => api<SchoolBrand>('/auth/school');
 
-export async function login(identifier: string, password: string): Promise<Session> {
+/**
+ * `remember` is the "keep me signed in" box, and unticked is the ordinary case
+ * on a handset a family shares: the server gives a working day instead of a
+ * fortnight.
+ */
+export async function login(
+  identifier: string,
+  password: string,
+  remember = true,
+): Promise<Session> {
   return sessionFrom(
     await api<TokenResponse>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ identifier, password }),
+      body: JSON.stringify({ identifier, password, remember }),
     }),
   );
 }
@@ -59,6 +68,37 @@ export async function loginWithOtp(phone: string, code: string): Promise<Session
     }),
   );
 }
+
+/**
+ * Ask for a code to set or reset a password.
+ *
+ * Answers the same way whether or not the number belongs to anybody at the
+ * school. A different answer would make this page a way to ask which families
+ * a school has.
+ */
+export const startPasswordReset = (phone: string): Promise<OtpSent> =>
+  api<OtpSent>('/auth/otp/start', {
+    method: 'POST',
+    body: JSON.stringify({ phone, purpose: 'password_reset' }),
+  });
+
+/**
+ * Set a password by proving the phone instead of knowing the old one.
+ *
+ * Serves both screens that need it: somebody who has forgotten a password
+ * cannot supply the current one, and somebody setting their first never had
+ * one. Nothing comes back — the caller signs in with what it just set, which
+ * is the step that catches a password typed wrong twice.
+ */
+export const setPasswordWithCode = (
+  phone: string,
+  code: string,
+  newPassword: string,
+): Promise<void> =>
+  api<void>('/auth/password/reset', {
+    method: 'POST',
+    body: JSON.stringify({ phone, code, new_password: newPassword }),
+  });
 
 /**
  * Trade the refresh cookie for a session on a cold start.

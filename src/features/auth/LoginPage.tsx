@@ -1,34 +1,39 @@
 /**
- * Signing in.
+ * Signing in, rebuilt to the SignIn artboard.
  *
- * Two doors, because there are two kinds of user. Staff have an email and a
- * password. A guardian has a phone and no patience for a password they set once
- * in January — they get a code by SMS, which is also the only credential the
- * public application form uses, so it is a path that has to work.
+ * The artboard changed the model, not just the look. What was here before had
+ * two doors — staff with an email and a password, guardians with a code by
+ * SMS — and the design has one: everybody signs in with the phone number the
+ * school holds and a password they chose. Codes have not gone away; they moved
+ * to the two places they are actually needed, setting a first password and
+ * resetting a forgotten one. That is the better shape. A code every time means
+ * an SMS every time, which is a bill the school pays and a wait on a congested
+ * network at eight in the morning.
  *
- * The school's name and colour come from `/auth/school`, which needs no
- * account: a parent who lands here should see their own school, not a product.
- * While that is loading the form is already usable — branding is not something
- * to wait on before letting somebody type their password.
+ * The server still accepts an email as the identifier, so a staff account set
+ * up before this change keeps working. The label says phone because that is
+ * what almost everybody has.
+ *
+ * The column beside the form is not decoration. Everybody who lands here is
+ * either new or stuck, and "there is no sign-up" answers the commonest wrong
+ * assumption before somebody hunts for a button that does not exist.
  */
 
-import { useEffect, useState } from 'react';
-import { Link, Navigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { ApiError } from '@/api/client';
 import { Button, Field, Notice, TextInput } from '@/components/ui';
-import { msisdn } from '@/lib/format';
 
-import { fetchBranding, startOtp } from './api';
+import { fetchBranding } from './api';
 import { useAuth } from './AuthProvider';
-
-type Door = 'password' | 'code';
+import { GateLayout, GateNote } from './components/GateLayout';
 
 export default function LoginPage() {
-  const { status, signIn, signInWithCode } = useAuth();
+  const { status, signIn } = useAuth();
   const location = useLocation();
-  const [door, setDoor] = useState<Door>('password');
+  const [params] = useSearchParams();
 
   const branding = useQuery({
     queryKey: ['branding'],
@@ -43,87 +48,67 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-canvas px-4 py-10">
-      <header className="flex flex-col items-center gap-2 text-center">
-        <span
-          className="inline-block h-3 w-3 rounded-[3px]"
-          style={{ background: branding.data?.brand_color ?? '#22c55e' }}
-          aria-hidden="true"
-        />
-        <h1 className="m-0 font-display text-[22px] font-semibold tracking-[-0.02em]">
-          {branding.data?.name ?? 'BeyondSchools'}
-        </h1>
-        <p className="m-0 text-[13px] text-muted">
-          {branding.isError
-            ? 'Sign in to the school management system'
-            : 'School management system'}
-        </p>
-      </header>
+    <GateLayout
+      schoolName={branding.data?.name}
+      brandColour={branding.data?.brand_color}
+      aside={
+        <>
+          <GateNote title="There is no sign-up">
+            <p className="m-0">
+              Accounts are not created here. The school creates yours: a guardian gets one
+              when a child is enrolled, a pupil when the guardian accepts the place, and
+              staff when an administrator adds them.
+            </p>
+            <p className="m-0">
+              If your child is enrolled and you still cannot get in, ring the office. They
+              can see whether your number is on the record.
+            </p>
+          </GateNote>
 
-      <div className="w-full max-w-sm rounded-card border border-line bg-white p-5">
-        <div
-          role="group"
-          aria-label="How you sign in"
-          className="mb-5 flex gap-1 rounded-control bg-canvas p-1"
-        >
-          <DoorTab active={door === 'password'} onClick={() => setDoor('password')}>
-            Staff
-          </DoorTab>
-          <DoorTab active={door === 'code'} onClick={() => setDoor('code')}>
-            Parent
-          </DoorTab>
-        </div>
+          <GateNote title="Looking for a place?">
+            <p className="m-0">
+              Applying does not need an account. The form asks for your phone number and
+              sends you a code to come back with.
+            </p>
+            <Link
+              to="/apply"
+              className="inline-flex min-h-12 items-center justify-center rounded-[10px] border border-line bg-white text-sm font-semibold text-ink no-underline hover:bg-canvas"
+            >
+              Apply for a place
+            </Link>
+          </GateNote>
 
-        {door === 'password' ? (
-          <PasswordForm onSubmit={signIn} />
-        ) : (
-          <CodeForm onSubmit={signInWithCode} />
-        )}
-      </div>
-
-      <p className="m-0 text-center text-[13px] text-muted">
-        Applying for a place?{' '}
-        <Link to="/apply" className="font-semibold text-ok-ink no-underline hover:text-brand-ink">
-          Start an application
-        </Link>
-      </p>
-    </main>
-  );
-}
-
-function DoorTab({
-  active,
-  onClick,
-  children,
-}: {
-  readonly active: boolean;
-  readonly onClick: () => void;
-  readonly children: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={`flex-1 rounded-[6px] text-[13px] font-semibold ${
-        active ? 'bg-white text-ink shadow-[0_0_0_1px_var(--color-line)]' : 'text-muted'
-      }`}
+          <GateNote title="Sharing a phone">
+            <p className="m-0">
+              If several people use this handset, leave the box above unticked and sign out
+              when you are done. Your fee statement and your children&rsquo;s records are
+              behind it.
+            </p>
+          </GateNote>
+        </>
+      }
     >
-      {children}
-    </button>
+      {/* A reset finishes here and hands the number along, so somebody who
+          has just typed it twice does not type it a third time. */}
+      <SignInForm onSubmit={signIn} knownPhone={params.get('phone') ?? ''} />
+    </GateLayout>
   );
 }
 
-/** Whatever went wrong, say the same thing: the difference is what an attacker probes for. */
-const SIGN_IN_FAILED = 'That email and password do not match an account at this school.';
+/** A server message, started as a sentence. */
+const sentence = (text: string): string =>
+  text.length === 0 ? text : text[0]!.toUpperCase() + text.slice(1);
 
-function PasswordForm({
+function SignInForm({
   onSubmit,
+  knownPhone,
 }: {
-  readonly onSubmit: (identifier: string, password: string) => Promise<void>;
+  readonly onSubmit: (identifier: string, password: string, remember: boolean) => Promise<void>;
+  readonly knownPhone: string;
 }) {
-  const [identifier, setIdentifier] = useState('');
+  const [identifier, setIdentifier] = useState(knownPhone);
   const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -132,160 +117,120 @@ function PasswordForm({
     setError(null);
     setBusy(true);
     try {
-      await onSubmit(identifier.trim(), password);
+      await onSubmit(identifier.trim(), password, remember);
     } catch (caught) {
-      // A lockout is worth saying plainly — somebody waiting fifteen minutes
-      // needs to know they are waiting, not keep typing.
-      setError(
-        caught instanceof ApiError && caught.status === 423 ? caught.detail : SIGN_IN_FAILED,
-      );
+      if (caught instanceof ApiError && caught.status === 423) {
+        // A lock-out is worth saying plainly: somebody waiting fifteen minutes
+        // needs to know they are waiting rather than keep typing.
+        setError('This account is locked for fifteen minutes after too many attempts.');
+      } else if (caught instanceof ApiError && caught.status === 401) {
+        // The server's own sentence. It carries the warning when an account is
+        // close to its limit, and nothing at all before that — a countdown from
+        // five would tell somebody guessing how far they had got. It is
+        // written for a log, so it starts a sentence here.
+        setError(sentence(caught.detail));
+      } else {
+        setError('We could not reach the school just now. Try again in a moment.');
+      }
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-4">
-      {error ? <Notice>{error}</Notice> : null}
-      <Field label="Email or phone" required>
-        <TextInput
-          name="identifier"
-          type="text"
-          autoComplete="username"
-          autoCapitalize="none"
-          spellCheck={false}
-          required
-          value={identifier}
-          onChange={(event) => setIdentifier(event.target.value)}
-        />
-      </Field>
-      <Field label="Password" required>
-        <TextInput
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-        />
-      </Field>
-      <Button type="submit" variant="primary" busy={busy} className="w-full">
+    <form onSubmit={(event) => void submit(event)}>
+      <h1 className="m-0 mb-1.5 font-display text-2xl font-semibold tracking-[-0.02em]">
         Sign in
-      </Button>
-    </form>
-  );
-}
+      </h1>
+      <p className="m-0 mb-6 text-[13.5px] leading-relaxed text-muted">
+        Guardians, pupils and staff all sign in here with the phone number the school holds
+        for them.
+      </p>
 
-function CodeForm({
-  onSubmit,
-}: {
-  readonly onSubmit: (phone: string, code: string) => Promise<void>;
-}) {
-  const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
-  const [sentAt, setSentAt] = useState<number | null>(null);
-  const [resendIn, setResendIn] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+      {/* Both are failures somebody has to act on, so both announce. A
+          lock-out rendered as a polite status is a lock-out a screen reader
+          never mentions, and the person keeps typing into a dead form. */}
+      {error ? (
+        <div className="mb-5">
+          <Notice>{error}</Notice>
+        </div>
+      ) : null}
 
-  // Count the wait down rather than leaving a dead button: a parent who cannot
-  // see why "Send again" does nothing taps it until they give up.
-  useEffect(() => {
-    if (resendIn <= 0) return;
-    const id = window.setTimeout(() => setResendIn((left) => left - 1), 1_000);
-    return () => window.clearTimeout(id);
-  }, [resendIn]);
-
-  async function send(event: React.FormEvent) {
-    event.preventDefault();
-    setError(null);
-    setBusy(true);
-    try {
-      const sent = await startOtp(phone.replace(/\s/g, ''));
-      setSentAt(Date.now());
-      setResendIn(sent.resend_after_seconds);
-    } catch (caught) {
-      setError(
-        caught instanceof ApiError ? caught.detail : 'The code could not be sent. Try again.',
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function verify(event: React.FormEvent) {
-    event.preventDefault();
-    setError(null);
-    setBusy(true);
-    try {
-      await onSubmit(phone.replace(/\s/g, ''), code.trim());
-    } catch (caught) {
-      setError(
-        caught instanceof ApiError ? caught.detail : 'That code did not work. Ask for a new one.',
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (sentAt === null) {
-    return (
-      <form onSubmit={(event) => void send(event)} className="flex flex-col gap-4">
-        {error ? <Notice>{error}</Notice> : null}
+      <div className="flex flex-col gap-4">
         <Field
           label="Phone number"
-          hint="The number the school has for you, starting 0."
+          hint="The number the school has on your record."
           required
         >
           <TextInput
-            name="phone"
-            type="tel"
+            name="identifier"
+            type="text"
             inputMode="tel"
-            autoComplete="tel"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
             required
+            autoFocus={knownPhone === ''}
             placeholder="0754 118 902"
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
+            value={identifier}
+            onChange={(event) => setIdentifier(event.target.value)}
+            className="min-h-12 rounded-[10px] text-[15px]"
           />
         </Field>
-        <Button type="submit" variant="primary" busy={busy} className="w-full">
-          Send me a code
-        </Button>
-      </form>
-    );
-  }
 
-  return (
-    <form onSubmit={(event) => void verify(event)} className="flex flex-col gap-4">
-      {error ? <Notice>{error}</Notice> : null}
-      <Notice tone="info">We sent a code to {msisdn(phone)}. It lasts ten minutes.</Notice>
-      <Field label="The code from the SMS" required>
-        <TextInput
-          name="code"
-          type="text"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          pattern="[0-9]*"
-          maxLength={6}
-          required
-          value={code}
-          onChange={(event) => setCode(event.target.value)}
-          className="text-center text-lg tracking-[0.3em]"
-        />
-      </Field>
-      <Button type="submit" variant="primary" busy={busy} className="w-full">
-        Sign in
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        disabled={resendIn > 0}
-        onClick={() => setSentAt(null)}
-        className="w-full"
-      >
-        {resendIn > 0 ? `Send again in ${resendIn}s` : 'Use a different number'}
-      </Button>
+        <div>
+          <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-2.5">
+            <span className="text-[13px] font-semibold">Password</span>
+            <Link
+              to="/forgot-password"
+              className="text-[12.5px] font-medium text-ok-ink no-underline hover:text-brand-ink"
+            >
+              Forgot it?
+            </Link>
+          </div>
+          <label htmlFor="password" className="sr-only">
+            Password
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="min-h-12 w-full rounded-[10px] border border-line bg-white px-3.5 text-[15px] text-ink"
+          />
+        </div>
+
+        <label className="flex cursor-pointer items-center gap-2.5">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(event) => setRemember(event.target.checked)}
+            className="h-[18px] max-h-[18px] min-h-[18px] w-[18px] flex-none accent-brand-strong"
+          />
+          <span className="text-[13px] text-ink-soft">Keep me signed in on this device</span>
+        </label>
+
+        <Button type="submit" variant="primary" busy={busy} className="min-h-[50px] w-full">
+          Sign in
+        </Button>
+      </div>
+
+      <div className="mt-6 border-t border-line-soft pt-5">
+        <p className="m-0 mb-2.5 text-[13px] font-semibold">First time here?</p>
+        <p className="m-0 mb-3.5 text-[12.5px] leading-relaxed text-muted">
+          The school sends a code by SMS when your child is enrolled, or when staff are
+          added. Use it to put a password on the account you already have.
+        </p>
+        <Link
+          to="/set-password"
+          className="flex min-h-12 items-center justify-center rounded-[10px] border border-line bg-white text-sm font-semibold text-ink no-underline hover:bg-canvas"
+        >
+          Set my first password
+        </Link>
+      </div>
     </form>
   );
 }

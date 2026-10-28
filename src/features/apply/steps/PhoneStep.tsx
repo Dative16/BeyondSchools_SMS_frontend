@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 
 import { sendCode, verifyCode } from '@/api/queries/apply';
 import { Button, Field, Notice, TextInput } from '@/components/ui';
-import { looksLikePhone, normalisePhone } from '@/domain/apply';
+import { looksLikePhone, normalisePhone } from '@/domain/phone';
 import { msisdn } from '@/lib/format';
 
 export function PhoneStep({

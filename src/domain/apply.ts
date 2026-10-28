@@ -92,24 +92,3 @@ export function stepFor(field: string): StepId {
   if (field === 'phone_verified') return 'phone';
   return 'child';
 }
-
-/**
- * A Tanzanian mobile number, in the one form the server wants.
- *
- * People write their own number six ways: 0754118902, +255754118902,
- * 255 754 118 902, 0754 118 902. All of them are the same number, and a form
- * that rejects five of them is a form that loses the applicant rather than
- * fixing the input.
- */
-export function normalisePhone(raw: string): string {
-  const digits = raw.replace(/\D/g, '');
-  if (digits.startsWith('255')) return `0${digits.slice(3)}`;
-  if (digits.startsWith('0')) return digits;
-  if (digits.length === 9) return `0${digits}`;
-  return digits;
-}
-
-/** Whether it could be one at all, before sending a code to it. */
-export function looksLikePhone(raw: string): boolean {
-  return /^0[67]\d{8}$/.test(normalisePhone(raw));
-}

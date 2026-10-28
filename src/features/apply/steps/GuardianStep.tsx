@@ -11,7 +11,7 @@
 import type { ApplyState } from '@/api/queries/apply';
 import { useSaveProgress } from '@/api/queries/apply';
 import { Button, Field, Notice, Select, TextInput } from '@/components/ui';
-import { normalisePhone } from '@/domain/apply';
+import { normalisePhone } from '@/domain/phone';
 
 import { useState } from 'react';
 
