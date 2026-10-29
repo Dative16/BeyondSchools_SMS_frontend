@@ -1,37 +1,15 @@
 /**
- * A route that exists but has no screen yet.
+ * What a route that is not a route shows.
  *
- * Honest rather than invisible. A nav item that goes nowhere, or a blank page,
- * both read as a bug; a page that says what is coming reads as a plan. These
- * are deleted one at a time as the screens land, and the file goes with the
- * last of them.
+ * `PlaceholderPage` is gone: every route in the staff shell now has a screen.
+ * What is left is the not-found page, which is a real destination — somebody
+ * following an old link, or reaching for a part of the system their account
+ * cannot see.
  */
 
 import { Link } from 'react-router-dom';
 
 import { Card } from '@/components/ui';
-
-export function PlaceholderPage({
-  title,
-  note,
-}: {
-  readonly title: string;
-  readonly note: string;
-}) {
-  return (
-    <>
-      <h1 className="mt-0 mb-5 font-display text-[26px] font-semibold tracking-[-0.02em]">
-        {title}
-      </h1>
-      <Card>
-        <p className="m-0 text-sm leading-relaxed text-muted">{note}</p>
-        <p className="mt-2 mb-0 text-[13px] text-faint">
-          The API behind this screen is built and tested; the screen itself is next.
-        </p>
-      </Card>
-    </>
-  );
-}
 
 export function NotFoundPage() {
   return (
