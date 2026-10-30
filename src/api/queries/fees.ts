@@ -19,6 +19,8 @@ export type ArrearsRow = components['schemas']['ArrearsRow'];
 export type SuspensePayment = components['schemas']['SuspensePayment'];
 export type Collection = components['schemas']['CollectionResponse'];
 export type FeeStructureRow = components['schemas']['FeeStructureRow'];
+export type FeeStructureDetail = components['schemas']['FeeStructureDetailResponse'];
+export type FeeItemBody = components['schemas']['FeeItemModel'];
 export type TermRun = components['schemas']['TermRunResponse'];
 type InvoicePage = components['schemas']['Page_InvoiceRow_'];
 type ArrearsPage = components['schemas']['Page_ArrearsRow_'];
@@ -39,6 +41,7 @@ export const feeKeys = {
   arrears: (page: number) => ['fees', 'arrears', page] as const,
   collection: ['fees', 'collection'] as const,
   structures: ['fees', 'structures'] as const,
+  structure: (id: string) => ['fees', 'structure', id] as const,
   suspense: ['fees', 'suspense'] as const,
 };
 
@@ -90,6 +93,20 @@ export const useStructures = (enabled: boolean) =>
     queryFn: () => api<FeeStructureRow[]>('/fees/structures'),
     enabled,
     staleTime: 5 * 60_000,
+  });
+
+/**
+ * One structure and its items.
+ *
+ * Not derived from the list. The list says a structure has five items; this
+ * says which five, and it is what makes a draft something a bursar can come
+ * back to tomorrow rather than something that had to be finished in one go.
+ */
+export const useStructure = (structureId: string) =>
+  useQuery({
+    queryKey: feeKeys.structure(structureId),
+    queryFn: () => api<FeeStructureDetail>(`/fees/structures/${structureId}`),
+    staleTime: 15_000,
   });
 
 export const useSuspense = (enabled: boolean) =>
@@ -178,3 +195,74 @@ export function useTermRun(termId: string) {
     },
   });
 }
+
+/**
+ * Writing a fee structure: start it, set its items, publish it, discard it.
+ *
+ * All four return the same shape — the structure and everything in it — so
+ * each writes the answer straight into the detail cache instead of asking for
+ * it again. That is worth doing here and nowhere else in this file: a bursar
+ * adding eight fee items does eight round trips, and a re-fetch after each
+ * one on a weak connection is how a form comes to feel like it is fighting
+ * back.
+ *
+ * The list is invalidated rather than patched, because publishing changes what
+ * the term run will do and that is not a figure to leave stale.
+ */
+function useStructureWrite<TVars>(
+  send: (vars: TVars) => Promise<FeeStructureDetail>,
+) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: send,
+    onSuccess: (detail) => {
+      client.setQueryData(feeKeys.structure(detail.structure.id), detail);
+      void client.invalidateQueries({ queryKey: feeKeys.structures });
+    },
+  });
+}
+
+export interface NewStructure {
+  readonly academic_year_id: string;
+  readonly level_id: string;
+  readonly stream_id: string | null;
+  readonly label: string;
+}
+
+export const useCreateStructure = () =>
+  useStructureWrite((body: NewStructure) =>
+    api<FeeStructureDetail>('/fees/structures', {
+      method: 'POST',
+      body: JSON.stringify({ ...body, items: [] }),
+    }),
+  );
+
+/** Replaces the whole list, which is what the endpoint does. */
+export const useSetStructureItems = (structureId: string) =>
+  useStructureWrite((items: readonly FeeItemBody[]) =>
+    api<FeeStructureDetail>(`/fees/structures/${structureId}/items`, {
+      method: 'PUT',
+      body: JSON.stringify({ items }),
+    }),
+  );
+
+/**
+ * Publishing is the one write here that changes what a term run would raise,
+ * so it drops everything money touches rather than just the structure list.
+ */
+export function usePublishStructure(structureId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      api<FeeStructureDetail>(`/fees/structures/${structureId}/publish`, { method: 'POST' }),
+    onSuccess: (detail) => {
+      client.setQueryData(feeKeys.structure(detail.structure.id), detail);
+      void client.invalidateQueries({ queryKey: feeKeys.all });
+    },
+  });
+}
+
+export const useDiscardStructure = (structureId: string) =>
+  useStructureWrite(() =>
+    api<FeeStructureDetail>(`/fees/structures/${structureId}/archive`, { method: 'POST' }),
+  );

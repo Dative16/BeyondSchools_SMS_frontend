@@ -1410,6 +1410,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/fees/structures/{structure_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One fee structure and its items
+         * @description The only way to reopen a draft.
+         *
+         *     The list says a structure has five items; this says which five. Without it
+         *     a half-finished draft could be read back only by whoever still had the
+         *     create response in front of them, so closing the tab lost the work.
+         */
+        get: operations["structure_api_v1_fees_structures__structure_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/fees/structures/{structure_id}/items": {
         parameters: {
             query?: never;
@@ -1447,6 +1471,26 @@ export interface paths {
          *     child nothing and look as though it worked.
          */
         post: operations["publish_structure_api_v1_fees_structures__structure_id__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fees/structures/{structure_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Discard a draft structure
+         * @description Refused once published. A draft, though, has billed nobody.
+         */
+        post: operations["archive_structure_api_v1_fees_structures__structure_id__archive_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2582,6 +2626,8 @@ export interface components {
             items: {
                 [key: string]: unknown;
             }[];
+            /** Enrolled Count */
+            enrolled_count: number;
         };
         /** FeeStructureResponse */
         FeeStructureResponse: {
@@ -2650,6 +2696,8 @@ export interface components {
             item_count: number;
             /** Total Amount */
             total_amount: string;
+            /** Enrolled Count */
+            enrolled_count: number;
         };
         /**
          * FeeStructureStatus
@@ -7011,6 +7059,39 @@ export interface operations {
             };
         };
     };
+    structure_api_v1_fees_structures__structure_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                structure_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeeStructureDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     set_items_api_v1_fees_structures__structure_id__items_put: {
         parameters: {
             query?: never;
@@ -7049,6 +7130,39 @@ export interface operations {
         };
     };
     publish_structure_api_v1_fees_structures__structure_id__publish_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                structure_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeeStructureDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_structure_api_v1_fees_structures__structure_id__archive_post: {
         parameters: {
             query?: never;
             header?: {

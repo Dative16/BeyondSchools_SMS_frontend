@@ -27,6 +27,7 @@ const StudentPage = lazy(() => import('@/features/students/StudentPage'));
 const ApplyPage = lazy(() => import('@/features/apply/ApplyPage'));
 const FeesPage = lazy(() => import('@/features/fees/FeesPage'));
 const InvoicePage = lazy(() => import('@/features/fees/InvoicePage'));
+const FeeStructureEditorPage = lazy(() => import('@/features/fees/FeeStructureEditorPage'));
 const AdmissionsPage = lazy(() => import('@/features/admissions/AdmissionsPage'));
 const ApplicationPage = lazy(() => import('@/features/admissions/ApplicationPage'));
 
@@ -44,6 +45,9 @@ export const router = createBrowserRouter([
           { path: 'admissions', element: <AdmissionsPage /> },
           { path: 'admissions/:applicationId', element: <ApplicationPage /> },
           { path: 'fees', element: <FeesPage /> },
+          // Before the invoice route, and it has to stay there: both sit one
+          // segment under /fees, and "structures" is not an invoice id.
+          { path: 'fees/structures/:structureId', element: <FeeStructureEditorPage /> },
           { path: 'fees/:invoiceId', element: <InvoicePage /> },
           { path: '*', element: <NotFoundPage /> },
         ],

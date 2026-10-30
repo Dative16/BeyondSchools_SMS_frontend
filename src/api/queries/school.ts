@@ -14,8 +14,8 @@ import { api } from '@/api/client';
 import type { components } from '@/api/schema';
 
 type School = components['schemas']['SchoolResponse'];
-type AcademicYear = components['schemas']['AcademicYearResponse'];
-type Term = components['schemas']['TermResponse'];
+export type AcademicYear = components['schemas']['AcademicYearResponse'];
+export type Term = components['schemas']['TermResponse'];
 type Queue = components['schemas']['Page_QueueRowResponse_'];
 
 export const schoolKeys = {
@@ -41,21 +41,32 @@ export function useSchool() {
  * request here would have put a presentation concern into the API. Both
  * responses are small and both are cached for half an hour.
  */
-export function useCurrentTerm() {
-  const years = useQuery({
+export function useAcademicYears() {
+  return useQuery({
     queryKey: schoolKeys.years,
     queryFn: () => api<AcademicYear[]>('/academic/years'),
     staleTime: 30 * 60_000,
   });
+}
 
-  const currentYear = years.data?.find((year) => year.is_current);
-
-  const terms = useQuery({
-    queryKey: schoolKeys.terms(currentYear?.id ?? 'none'),
-    queryFn: () => api<Term[]>(`/academic/years/${currentYear?.id}/terms`),
-    enabled: Boolean(currentYear),
+/**
+ * One year's terms. Needed away from the shell as well: a fee structure is
+ * priced per term, and the terms it is priced against are the ones belonging
+ * to its year rather than to the year the school happens to be in now.
+ */
+export function useTerms(yearId: string | undefined) {
+  return useQuery({
+    queryKey: schoolKeys.terms(yearId ?? 'none'),
+    queryFn: () => api<Term[]>(`/academic/years/${yearId}/terms`),
+    enabled: Boolean(yearId),
     staleTime: 30 * 60_000,
   });
+}
+
+export function useCurrentTerm() {
+  const years = useAcademicYears();
+  const currentYear = years.data?.find((year) => year.is_current);
+  const terms = useTerms(currentYear?.id);
 
   const currentTerm = terms.data?.find((term) => term.is_current);
 

@@ -41,6 +41,7 @@ import { channelName, invoiceStatusPill } from '@/domain/fees';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { amount, compactMoney, longDate, msisdn } from '@/lib/format';
 
+import { StartStructureDialog } from './components/StartStructureDialog';
 import { TermRunPanel } from './components/TermRunPanel';
 
 type Tab = 'invoices' | 'arrears' | 'suspense' | 'structures';
@@ -48,6 +49,8 @@ type Tab = 'invoices' | 'arrears' | 'suspense' | 'structures';
 export default function FeesPage() {
   const { can } = useAuth();
   const [params, setParams] = useSearchParams();
+
+  const [starting, setStarting] = useState(false);
 
   const tab = (params.get('tab') as Tab | null) ?? 'invoices';
   const page = Number(params.get('page') ?? 1);
@@ -285,8 +288,18 @@ export default function FeesPage() {
         </Card>
       ) : null}
 
+      <StartStructureDialog open={starting} onClose={() => setStarting(false)} />
+
       {tab === 'structures' ? (
         <Card className="overflow-hidden !p-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4.5 pt-4">
+            <p className="m-0 text-[12.5px] text-muted">
+              A level with no published structure cannot be invoiced at all.
+            </p>
+            <Button variant="primary" size="sm" onClick={() => setStarting(true)}>
+              Start a structure
+            </Button>
+          </div>
           <div className="px-4.5 pt-3.5">
             <DataTable
               columns={structureColumns}
@@ -302,17 +315,21 @@ export default function FeesPage() {
                 />
               }
               card={(row) => (
-                <div className="rounded-[10px] border border-line p-3">
+                <Link
+                  to={`/fees/structures/${row.id}`}
+                  className="block rounded-[10px] border border-line p-3 no-underline"
+                >
                   <div className="flex items-start justify-between gap-3">
-                    <p className="m-0 text-sm font-semibold">{row.level_name}</p>
+                    <p className="m-0 text-sm font-semibold text-ink">{row.level_name}</p>
                     <Pill tone={row.status === 'published' ? 'ok' : 'warn'}>
                       {row.status === 'published' ? 'Published' : 'Draft'}
                     </Pill>
                   </div>
                   <p className="mt-1 mb-0 text-xs text-muted">
-                    {row.item_count} items · {amount(Number(row.total_amount))} TZS
+                    {row.item_count} items · {amount(Number(row.total_amount))} TZS ·{' '}
+                    {row.enrolled_count} {row.enrolled_count === 1 ? 'pupil' : 'pupils'}
                   </p>
-                </div>
+                </Link>
               )}
             />
           </div>
@@ -436,9 +453,32 @@ const structureColumns: readonly Column<{
   status: string;
   item_count: number;
   total_amount: string;
+  enrolled_count: number;
 }>[] = [
-  { key: 'level', header: 'Class', nowrap: true, cell: (row) => row.level_name },
+  {
+    key: 'level',
+    header: 'Class',
+    nowrap: true,
+    cell: (row) => (
+      <Link
+        to={`/fees/structures/${row.id}`}
+        className="text-[13.5px] font-semibold text-ink no-underline hover:text-ok-ink"
+      >
+        {row.level_name}
+      </Link>
+    ),
+  },
   { key: 'label', header: 'Structure', cell: (row) => row.label },
+  {
+    key: 'pupils',
+    header: 'Pupils',
+    align: 'right',
+    nowrap: true,
+    // Who a price would actually be charged to. A structure published against
+    // a level nobody is in is harmless; one published against the wrong level
+    // bills the wrong children, and this is the column where that shows.
+    cell: (row) => <span className="text-ink-dim">{row.enrolled_count}</span>,
+  },
   {
     key: 'items',
     header: 'Items',

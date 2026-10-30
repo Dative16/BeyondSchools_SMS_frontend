@@ -4933,6 +4933,66 @@
         }
       }
     },
+    "/api/v1/fees/structures/{structure_id}": {
+      "get": {
+        "tags": [
+          "fees"
+        ],
+        "summary": "One fee structure and its items",
+        "description": "The only way to reopen a draft.\n\nThe list says a structure has five items; this says which five. Without it\na half-finished draft could be read back only by whoever still had the\ncreate response in front of them, so closing the tab lost the work.",
+        "operationId": "structure_api_v1_fees_structures__structure_id__get",
+        "parameters": [
+          {
+            "name": "structure_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Structure Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeeStructureDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/fees/structures/{structure_id}/items": {
       "put": {
         "tags": [
@@ -5011,6 +5071,66 @@
         "summary": "Make a structure live",
         "description": "An empty structure cannot be published: a term run would bill every\nchild nothing and look as though it worked.",
         "operationId": "publish_structure_api_v1_fees_structures__structure_id__publish_post",
+        "parameters": [
+          {
+            "name": "structure_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Structure Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeeStructureDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fees/structures/{structure_id}/archive": {
+      "post": {
+        "tags": [
+          "fees"
+        ],
+        "summary": "Discard a draft structure",
+        "description": "Refused once published. A draft, though, has billed nobody.",
+        "operationId": "archive_structure_api_v1_fees_structures__structure_id__archive_post",
         "parameters": [
           {
             "name": "structure_id",
@@ -8399,12 +8519,17 @@
             },
             "type": "array",
             "title": "Items"
+          },
+          "enrolled_count": {
+            "type": "integer",
+            "title": "Enrolled Count"
           }
         },
         "type": "object",
         "required": [
           "structure",
-          "items"
+          "items",
+          "enrolled_count"
         ],
         "title": "FeeStructureDetailResponse"
       },
@@ -8562,6 +8687,10 @@
           "total_amount": {
             "type": "string",
             "title": "Total Amount"
+          },
+          "enrolled_count": {
+            "type": "integer",
+            "title": "Enrolled Count"
           }
         },
         "type": "object",
@@ -8577,7 +8706,8 @@
           "published_at",
           "note",
           "item_count",
-          "total_amount"
+          "total_amount",
+          "enrolled_count"
         ],
         "title": "FeeStructureRow",
         "description": "A structure as the settings screen lists it.\n\nThe item count and total come along because a structure with no items is\nthe commonest reason a term run finds nothing to bill."

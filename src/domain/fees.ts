@@ -161,3 +161,149 @@ export const PAYMENT_CHANNELS = Object.entries(CHANNELS).map(([value, label]) =>
   value,
   label,
 }));
+
+// ---------------------------------------------------------------------------
+// What a school charges
+// ---------------------------------------------------------------------------
+
+export type FeeFrequency = 'per_term' | 'annual' | 'one_off';
+
+/** One line of a structure, as the editor holds it before it is saved. */
+export interface FeeItemFacts {
+  readonly name: string;
+  readonly amount: number;
+  readonly frequency: FeeFrequency;
+  /** Set only for an item billed in one particular term. */
+  readonly termIndex: number | null;
+  readonly isMandatory: boolean;
+}
+
+/**
+ * Whether an item lands on one term's invoice.
+ *
+ * A mirror of `lines_for_term` in app/domain/invoicing.py. It exists here so a
+ * draft can be totalled on screen before anything is written — the term run is
+ * what actually decides, and if the two ever disagree it is this copy that is
+ * wrong.
+ */
+export function billedInTerm(
+  item: FeeItemFacts,
+  { termIndex, isFirstTermOfYear }: { termIndex: number; isFirstTermOfYear: boolean },
+): boolean {
+  // A one-off belongs to joining the school, not to a term.
+  if (item.frequency === 'one_off') return false;
+  if (item.frequency === 'annual' && !isFirstTermOfYear) return false;
+  if (item.termIndex !== null && item.termIndex !== termIndex) return false;
+  return true;
+}
+
+const add = (total: number, item: FeeItemFacts): number => total + item.amount;
+
+export interface TermTotal {
+  readonly index: number;
+  readonly label: string;
+  readonly total: number;
+}
+
+export interface StructureTotals {
+  readonly perTerm: readonly TermTotal[];
+  /** The one-off items, which land on the invoice a child joins with. */
+  readonly joining: number;
+  readonly fullYear: number;
+}
+
+/**
+ * What a structure costs, read three ways.
+ *
+ * Per term rather than "term 1 and the others", because an item pinned to
+ * term 3 makes the others unequal and a bursar reading one figure for "the
+ * rest of the year" would be reading a figure that is true of neither term.
+ *
+ * The first term in the list is the one annual items are billed in — taken
+ * from the terms themselves rather than assumed to be index 1, because a
+ * school whose terms are numbered differently still has a first one.
+ */
+export function structureTotals(
+  items: readonly FeeItemFacts[],
+  terms: readonly { readonly index: number; readonly label: string }[],
+): StructureTotals {
+  const ordered = [...terms].sort((a, b) => a.index - b.index);
+  const first = ordered.at(0)?.index;
+
+  const perTerm = ordered.map((term) => ({
+    index: term.index,
+    label: term.label,
+    total: items
+      .filter((item) =>
+        billedInTerm(item, {
+          termIndex: term.index,
+          isFirstTermOfYear: term.index === first,
+        }),
+      )
+      .reduce(add, 0),
+  }));
+
+  return {
+    perTerm,
+    joining: items.filter((item) => item.frequency === 'one_off').reduce(add, 0),
+    fullYear: perTerm.reduce((total, term) => total + term.total, 0),
+  };
+}
+
+/** When an item is billed, in the words the table column uses. */
+export function whenBilled(item: FeeItemFacts): string {
+  if (item.frequency === 'one_off') return 'When a child joins';
+  if (item.frequency === 'annual') return 'Once a year';
+  if (item.termIndex !== null) return `Term ${item.termIndex} only`;
+  return 'Every term';
+}
+
+/**
+ * Who pays it.
+ *
+ * An optional item is not billed by the term run unless a child is marked as
+ * taking it, so saying "all pupils" of one would be a lie a bursar would only
+ * find out about after the invoices went out.
+ */
+export const whoPays = (item: FeeItemFacts): string =>
+  item.isMandatory ? 'All pupils' : 'Only those who take it';
+
+/** How a category reads to a person, rather than how it is stored. */
+const FEE_CATEGORIES: Record<string, string> = {
+  tuition: 'Tuition',
+  admission: 'Admission',
+  examination: 'Examination',
+  boarding: 'Boarding',
+  transport: 'Transport',
+  uniform: 'Uniform',
+  learning_materials: 'Learning materials',
+  stationery: 'Stationery',
+  meals: 'Meals',
+  development: 'Development',
+  other: 'Other',
+};
+
+export const categoryName = (category: string): string => FEE_CATEGORIES[category] ?? category;
+
+export const FEE_CATEGORY_OPTIONS = Object.entries(FEE_CATEGORIES).map(([value, label]) => ({
+  value,
+  label,
+}));
+
+/**
+ * Why a structure cannot be published yet, or null when it can.
+ *
+ * The server refuses an empty one and refuses a second publish; both answers
+ * are repeated here so the button can be disabled with a reason on it rather
+ * than accepting a click and returning a 422.
+ */
+export function publishBlockedBecause(structure: {
+  readonly status: string;
+  readonly itemCount: number;
+}): string | null {
+  if (structure.status === 'published') return 'This structure is already published.';
+  if (structure.status === 'archived') return 'This draft was discarded.';
+  if (structure.itemCount === 0)
+    return 'Add at least one fee item first. A structure with none would bill every child nothing.';
+  return null;
+}
