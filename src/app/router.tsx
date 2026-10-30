@@ -30,6 +30,7 @@ const InvoicePage = lazy(() => import('@/features/fees/InvoicePage'));
 const FeeStructureEditorPage = lazy(() => import('@/features/fees/FeeStructureEditorPage'));
 const AdmissionsPage = lazy(() => import('@/features/admissions/AdmissionsPage'));
 const ApplicationPage = lazy(() => import('@/features/admissions/ApplicationPage'));
+const AdmitByHandPage = lazy(() => import('@/features/admissions/AdmitByHandPage'));
 
 export const router = createBrowserRouter([
   {
@@ -41,6 +42,10 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: 'students', element: <StudentsPage /> },
+          // Before the :studentId route: "new" is not a student id. This is
+          // where the "Admit a child" button on three screens has always
+          // pointed, and until now there was nothing here.
+          { path: 'students/new', element: <AdmitByHandPage /> },
           { path: 'students/:studentId', element: <StudentPage /> },
           { path: 'admissions', element: <AdmissionsPage /> },
           { path: 'admissions/:applicationId', element: <ApplicationPage /> },

@@ -1018,6 +1018,36 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/guardians/at-number": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Who already uses this phone number
+         * @description Null when the number is new, which is the ordinary answer.
+         *
+         *     Asked by the counter admission form before it submits. The admission
+         *     matches a guardian on phone and the record already on file wins on every
+         *     field, name included — so without this a registrar could type a different
+         *     spelling of a name the school already holds and never be told their
+         *     version was dropped.
+         *
+         *     Declared before the list route for the same reason the by-hand admission
+         *     is declared before the application one: a fixed path must not be read as
+         *     a parameter.
+         */
+        get: operations["guardian_at_number_api_v1_guardians_at_number_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/guardians": {
         parameters: {
             query?: never;
@@ -1359,6 +1389,34 @@ export interface paths {
          *     and a place nobody has paid for cannot look accepted in the funnel.
          */
         post: operations["record_deposit_api_v1_admissions__application_id__deposit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/by-hand": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Admit a child at the counter
+         * @description For a family at the office who did not use the public form.
+         *
+         *     One transaction: the pupil record, the enrolment, the guardian, the
+         *     family's login and this term's invoice. Half of it is a child the roll
+         *     cannot find or a bill nobody can sign in to pay, and there is a parent
+         *     standing at the desk.
+         *
+         *     Declared before `/{application_id}/enrol` so that "by-hand" is read as
+         *     itself rather than as an application id.
+         */
+        post: operations["admit_by_hand_api_v1_admissions_by_hand_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1813,6 +1871,124 @@ export interface components {
             is_current: boolean;
             /** Is Closed */
             is_closed: boolean;
+        };
+        /**
+         * AdmitByHandRequest
+         * @description A family at the counter who never used the public form.
+         *
+         *     The academic year is not asked for. It is the year the chosen class
+         *     belongs to, which is the only answer that can be right — a class and a
+         *     year that disagreed would put a child on a roll nobody is looking at.
+         */
+        AdmitByHandRequest: {
+            child: components["schemas"]["AdmitChild"];
+            /**
+             * Class Group Id
+             * Format: uuid
+             */
+            class_group_id: string;
+            /** @default day */
+            residency: components["schemas"]["Residency"];
+            guardian: components["schemas"]["AdmitGuardian"];
+            /** Enrolled On */
+            enrolled_on?: string | null;
+        };
+        /**
+         * AdmitChild
+         * @description The child, as the counter form asks for them.
+         *
+         *     The same fields as `StudentCreateRequest` and the same birth-date rule,
+         *     deliberately not inherited: that model also accepts `admission_year`, and
+         *     an admission number's year comes from the class being admitted into, not
+         *     from anything a form may send.
+         */
+        AdmitChild: {
+            /** First Name */
+            first_name: string;
+            /** Middle Name */
+            middle_name?: string | null;
+            /** Surname */
+            surname: string;
+            /**
+             * Date Of Birth
+             * Format: date
+             */
+            date_of_birth: string;
+            /**
+             * Sex
+             * @enum {string}
+             */
+            sex: "f" | "m";
+            /**
+             * Nationality
+             * @default Tanzanian
+             */
+            nationality: string;
+            /** Birth Certificate No */
+            birth_certificate_no?: string | null;
+            /** Previous School */
+            previous_school?: string | null;
+        };
+        /**
+         * AdmitGuardian
+         * @description One guardian is enough to start.
+         *
+         *     This person receives the invoices and the SMS, and the phone number is how
+         *     they sign in — so it is checked here the same way the public form checks
+         *     the number it sends a code to. Others are linked later from the pupil
+         *     record.
+         */
+        AdmitGuardian: {
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone: string;
+            /** @default other */
+            relationship: components["schemas"]["Relationship"];
+            /** National Id */
+            national_id?: string | null;
+        };
+        /**
+         * AdmittedResponse
+         * @description Everything the admission created, named.
+         *
+         *     The registrar reads the admission number out to the family and opens the
+         *     invoice if they are paying today, so both come back rather than leaving
+         *     the screen to go looking.
+         */
+        AdmittedResponse: {
+            /**
+             * Student Id
+             * Format: uuid
+             */
+            student_id: string;
+            /**
+             * Enrolment Id
+             * Format: uuid
+             */
+            enrolment_id: string;
+            /** Admission No */
+            admission_no: string;
+            /** Class Name */
+            class_name: string;
+            /**
+             * Guardian Id
+             * Format: uuid
+             */
+            guardian_id: string;
+            /** Guardian Existed */
+            guardian_existed: boolean;
+            /** Login */
+            login: string;
+            /**
+             * Invoice Id
+             * Format: uuid
+             */
+            invoice_id: string;
+            /** Invoice Reference */
+            invoice_reference: string;
+            /** Billed */
+            billed: string;
         };
         /**
          * ApplicationDetailResponse
@@ -2775,6 +2951,20 @@ export interface components {
              * @default 0
              */
             withdrawn: number;
+        };
+        /**
+         * GuardianAtThisNumber
+         * @description Who already uses a phone number, for the counter admission form.
+         *
+         *     Their children come with them, named and with their classes, because
+         *     "this number is already on a pupil's record" is not useful on its own —
+         *     the registrar needs to see *whose*, to ask the person in front of them
+         *     whether it is the same family.
+         */
+        GuardianAtThisNumber: {
+            guardian: components["schemas"]["GuardianResponse"];
+            /** Children */
+            children: components["schemas"]["GuardianChildResponse"][];
         };
         /**
          * GuardianChildResponse
@@ -6407,6 +6597,39 @@ export interface operations {
             };
         };
     };
+    guardian_at_number_api_v1_guardians_at_number_get: {
+        parameters: {
+            query: {
+                phone: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardianAtThisNumber"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_guardians_api_v1_guardians_get: {
         parameters: {
             query?: {
@@ -6941,6 +7164,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ManualPaymentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admit_by_hand_api_v1_admissions_by_hand_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdmitByHandRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdmittedResponse"];
                 };
             };
             /** @description Validation Error */
