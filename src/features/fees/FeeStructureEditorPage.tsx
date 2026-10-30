@@ -44,7 +44,6 @@ import {
   Pill,
 } from '@/components/ui';
 import {
-  categoryName,
   publishBlockedBecause,
   structureTotals,
   whenBilled,
@@ -212,11 +211,13 @@ export default function FeeStructureEditorPage() {
                         const facts = toFacts(item);
                         return (
                           <tr key={`${item.name}-${index}`} className="border-t border-line">
+                            {/* The name alone, as the artboard has it. The
+                                category is for reporting and does not change
+                                what is billed, and printing it under the name
+                                puts "Tuition" on the screen twice for the
+                                commonest line a school has. */}
                             <Td>
                               <span className="font-medium text-ink">{item.name}</span>
-                              <span className="block text-xs text-muted">
-                                {categoryName(item.category)}
-                              </span>
                             </Td>
                             <Td>{whenBilled(facts)}</Td>
                             <Td>{whoPays(facts)}</Td>
