@@ -16,7 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "types": "openapi-typescript ../beyondschools-sms-api/openapi.json -o src/api/schema.d.ts"
+    "types": "openapi-typescript src/api/openapi.json -o src/api/schema.d.ts",
+    "types:pull": "node -e \"require('fs').copyFileSync('../beyondschools-sms-api/openapi.json','src/api/openapi.json')\" && npm run types"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.0",

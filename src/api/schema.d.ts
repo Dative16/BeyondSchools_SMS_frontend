@@ -296,6 +296,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/password/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set a password with a code instead of the old one
+         * @description The other half of `/otp/start` with `purpose=password_reset`.
+         *
+         *     `/password` cannot serve either screen that needs this: somebody who has
+         *     forgotten a password cannot supply the current one, and somebody setting
+         *     their first never had one. The code is the proof, and it can only have
+         *     gone to the number already on the record.
+         *
+         *     Answers the same way for a number nobody has and a code that was wrong.
+         *     Whether a number belongs to a family at this school is not something an
+         *     unauthenticated page may be used to find out.
+         */
+        post: operations["reset_password_api_v1_auth_password_reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/schools/me": {
         parameters: {
             query?: never;
@@ -3202,6 +3231,11 @@ export interface components {
             identifier: string;
             /** Password */
             password: string;
+            /**
+             * Remember
+             * @default true
+             */
+            remember: boolean;
         };
         /**
          * ManualPaymentRequest
@@ -3355,6 +3389,22 @@ export interface components {
             page: number;
             /** Size */
             size: number;
+        };
+        /**
+         * PasswordResetRequest
+         * @description Set a password by proving the phone, not by knowing the old one.
+         *
+         *     Serves both screens that need it: somebody who has forgotten a password
+         *     cannot supply the current one, and somebody setting their first never had
+         *     one. The code can only have gone to the number already on the record.
+         */
+        PasswordResetRequest: {
+            /** Phone */
+            phone: string;
+            /** Code */
+            code: string;
+            /** New Password */
+            new_password: string;
         };
         /** PaymentOnInvoice */
         PaymentOnInvoice: {
@@ -4709,6 +4759,39 @@ export interface operations {
                         [key: string]: string[];
                     };
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_password_api_v1_auth_password_reset_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-school-subdomain"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

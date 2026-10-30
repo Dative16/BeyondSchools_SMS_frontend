@@ -20,6 +20,20 @@ jobs:
       - name: Lint and layering
         run: npm run lint
 
+      # schema.d.ts is generated, never written by hand, and the API decides
+      # what is in it. Checking it here is what stops the client's idea of the
+      # contract from quietly parting company with the server's — which it had
+      # already done before this step existed: /auth/password/reset was served
+      # by the API and called by this app while absent from these types.
+      - name: API types match the contract
+        run: |
+          npm run types
+          if ! git diff --quiet src/api/schema.d.ts; then
+            echo "::error::src/api/schema.d.ts is stale. Run 'npm run types:pull' and commit the result."
+            git diff --stat src/api/schema.d.ts
+            exit 1
+          fi
+
       - name: Types
         run: npm run typecheck
       - name: Tests
