@@ -561,6 +561,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/academic/class-groups/{group_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change a class's room or capacity
+         * @description Capacity is the one that matters.
+         *
+         *     The counter admission form refuses a full class and tells the registrar to
+         *     come here and open it up, which until now was advice with nowhere to act
+         *     on it.
+         */
+        patch: operations["update_class_group_api_v1_academic_class_groups__group_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/academic/teaching-staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Who can be put in front of a class
+         * @description The same roles the save would accept, so the picker cannot offer
+         *     somebody it would then refuse.
+         */
+        get: operations["teaching_staff_api_v1_academic_teaching_staff_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/academic/class-groups/{group_id}/class-teacher": {
         parameters: {
             query?: never;
@@ -2412,6 +2457,21 @@ export interface components {
             capacity: number | null;
             /** Pupils */
             pupils: number;
+        };
+        /**
+         * ClassGroupUpdateRequest
+         * @description What can be changed about a class after it exists.
+         *
+         *     Not the name: it is written from the level and the stream by one function,
+         *     so a roll, an invoice and an SMS cannot disagree about what a class is
+         *     called. Not the level or the year either — a class that changed either
+         *     would move every child in it without anybody saying so.
+         */
+        ClassGroupUpdateRequest: {
+            /** Room */
+            room?: string | null;
+            /** Capacity */
+            capacity?: number | null;
         };
         /** ClassTeacherRequest */
         ClassTeacherRequest: {
@@ -4414,6 +4474,34 @@ export interface components {
              */
             class_group_id: string;
         };
+        /**
+         * TeachingStaffResponse
+         * @description Somebody who can be put in front of a class.
+         *
+         *     What they already hold comes with them, because a head of academics
+         *     choosing a class teacher needs to see it: a teacher who already has a
+         *     class can take a second, but the register then falls to one person twice a
+         *     day, and that should be a decision rather than an accident.
+         */
+        TeachingStaffResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Full Name */
+            full_name: string;
+            /** Role */
+            role: string;
+            /** Staff No */
+            staff_no: string | null;
+            /** Class Group Id */
+            class_group_id: string | null;
+            /** Class Name */
+            class_name: string | null;
+            /** Subjects Taught */
+            subjects_taught: number;
+        };
         /** TermDraftRequest */
         TermDraftRequest: {
             /** Index */
@@ -5606,6 +5694,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClassGroupResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_class_group_api_v1_academic_class_groups__group_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClassGroupUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassGroupResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    teaching_staff_api_v1_academic_teaching_staff_get: {
+        parameters: {
+            query?: {
+                year_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeachingStaffResponse"][];
                 };
             };
             /** @description Validation Error */

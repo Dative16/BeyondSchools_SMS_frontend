@@ -31,6 +31,9 @@ const FeeStructureEditorPage = lazy(() => import('@/features/fees/FeeStructureEd
 const AdmissionsPage = lazy(() => import('@/features/admissions/AdmissionsPage'));
 const ApplicationPage = lazy(() => import('@/features/admissions/ApplicationPage'));
 const AdmitByHandPage = lazy(() => import('@/features/admissions/AdmitByHandPage'));
+const YearsPage = lazy(() => import('@/features/setup/YearsPage'));
+const LevelsPage = lazy(() => import('@/features/setup/LevelsPage'));
+const ClassesPage = lazy(() => import('@/features/setup/ClassesPage'));
 
 export const router = createBrowserRouter([
   {
@@ -54,6 +57,9 @@ export const router = createBrowserRouter([
           // segment under /fees, and "structures" is not an invoice id.
           { path: 'fees/structures/:structureId', element: <FeeStructureEditorPage /> },
           { path: 'fees/:invoiceId', element: <InvoicePage /> },
+          { path: 'setup/years', element: <YearsPage /> },
+          { path: 'setup/levels', element: <LevelsPage /> },
+          { path: 'setup/classes', element: <ClassesPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

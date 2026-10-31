@@ -17,9 +17,12 @@ import type { Permission } from '@/types/domain';
 
 import {
   AdmissionsIcon,
+  CalendarIcon,
+  ClassesIcon,
   DashboardIcon,
   FeesIcon,
   HomeworkIcon,
+  LadderIcon,
   StudentsIcon,
   TimetableIcon,
 } from '@/components/icons';
@@ -67,6 +70,32 @@ export const NAV: readonly NavGroup[] = [
     items: [
       { to: '/timetable', label: 'Timetable', icon: TimetableIcon, soon: 'Phase 2' },
       { to: '/homework', label: 'Homework', icon: HomeworkIcon, soon: 'Phase 2' },
+    ],
+  },
+  // Setup. Only screens that exist are listed: a nav item pointing at nothing
+  // is the fault that left "Admit a child" dead on three screens for weeks.
+  // School settings and Subjects join this group when they are built.
+  {
+    heading: 'Setup',
+    items: [
+      {
+        to: '/setup/years',
+        label: 'Years and terms',
+        icon: CalendarIcon,
+        permission: 'academic:manage',
+      },
+      {
+        to: '/setup/levels',
+        label: 'Levels',
+        icon: LadderIcon,
+        permission: 'academic:manage',
+      },
+      {
+        to: '/setup/classes',
+        label: 'Classes',
+        icon: ClassesIcon,
+        permission: 'academic:manage',
+      },
     ],
   },
 ];

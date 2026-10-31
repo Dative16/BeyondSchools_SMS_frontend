@@ -80,6 +80,27 @@ export const HomeworkIcon = (p: IconProps) => (
   </Icon>
 );
 
+export const CalendarIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3.5" y="4.5" width="13" height="12" rx="1.5" />
+    <path d="M3.5 8.5h13M7 3v3M13 3v3" />
+  </Icon>
+);
+
+/** The ladder: rungs a pupil climbs one a year. */
+export const LadderIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6.5 3v14M13.5 3v14M6.5 7h7M6.5 10.5h7M6.5 14h7" />
+  </Icon>
+);
+
+export const ClassesIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="5" width="14" height="10" rx="1.5" />
+    <path d="M7 9h6M7 12h3" />
+  </Icon>
+);
+
 export const BellIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M10 3a4.5 4.5 0 00-4.5 4.5c0 3-1.5 4-1.5 4h12s-1.5-1-1.5-4A4.5 4.5 0 0010 3zM8.5 15a1.6 1.6 0 003 0" />
