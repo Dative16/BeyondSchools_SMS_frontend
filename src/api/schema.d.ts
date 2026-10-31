@@ -351,6 +351,56 @@ export interface paths {
         patch: operations["update_my_school_api_v1_schools_me_patch"];
         trace?: never;
     };
+    "/api/v1/schools/me/fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The fields this school adds
+         * @description Readable by any staff account, because the pupil profile has to draw
+         *     them for anybody who can read a pupil.
+         */
+        get: operations["my_school_fields_api_v1_schools_me_fields_get"];
+        put?: never;
+        /**
+         * Add a field
+         * @description Every field added here appears, empty, on every pupil record the school
+         *     has. Somebody then has to fill them all in.
+         */
+        post: operations["add_my_school_field_api_v1_schools_me_fields_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schools/me/fields/{field_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Relabel or retire a field
+         * @description Neither the key nor the kind can change.
+         *
+         *     Values already recorded are stored under that key and typed by that kind,
+         *     so changing either would reinterpret answers people have already given.
+         *     Retiring the field keeps every value and stops it being asked for again.
+         */
+        patch: operations["update_my_school_field_api_v1_schools_me_fields__field_id__patch"];
+        trace?: never;
+    };
     "/api/v1/academic/years": {
         parameters: {
             query?: never;
@@ -634,7 +684,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Subjects */
+        /**
+         * Subjects
+         * @description Each subject with the levels it is taught at.
+         *
+         *     One query for the levels rather than one per subject: a dozen subjects
+         *     asking one at a time is a dozen round trips on the connection this app is
+         *     built for.
+         */
         get: operations["list_subjects_api_v1_academic_subjects_get"];
         put?: never;
         /** Add a subject */
@@ -643,6 +700,30 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/academic/subjects/{subject_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Rename, move or retire a subject
+         * @description There is no delete.
+         *
+         *     A report card from a closed year names its subjects, so retiring one —
+         *     `is_active: false` — keeps every old record and stops it appearing on new
+         *     mark sheets. Renaming is safe: the code is what records point at.
+         */
+        patch: operations["update_subject_api_v1_academic_subjects__subject_id__patch"];
         trace?: never;
     };
     "/api/v1/academic/teaching-assignments": {
@@ -2950,6 +3031,16 @@ export interface components {
          */
         FieldKind: "text" | "number" | "date" | "boolean" | "choice";
         /**
+         * FieldScope
+         * @description What a custom field hangs off.
+         *
+         *     `ENROLMENT` is the interesting one: a bed number or a bus route is a fact
+         *     about a child *this year*, not a fact about the child. Hanging it off the
+         *     student would make last year's dormitory unanswerable.
+         * @enum {string}
+         */
+        FieldScope: "student" | "guardian" | "enrolment" | "application";
+        /**
          * FieldValuesRequest
          * @description A school's own fields, keyed by the field's key.
          *
@@ -4025,6 +4116,91 @@ export interface components {
             /** Timezone */
             timezone: string;
         };
+        /**
+         * SchoolFieldCreateRequest
+         * @description Add a field.
+         *
+         *     Every field added here appears, empty, on every pupil record the school
+         *     has, and somebody then has to fill them all in. That cost is the reason
+         *     `required_at_registration` defaults to false: a required field on the
+         *     public form costs completed applications.
+         */
+        SchoolFieldCreateRequest: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            kind: components["schemas"]["FieldKind"];
+            /** @default student */
+            scope: components["schemas"]["FieldScope"];
+            /** Help Text */
+            help_text?: string | null;
+            /** Options */
+            options?: string[];
+            /**
+             * Required At Registration
+             * @default false
+             */
+            required_at_registration: boolean;
+            /**
+             * Is Sensitive
+             * @default false
+             */
+            is_sensitive: boolean;
+        };
+        /**
+         * SchoolFieldResponse
+         * @description One field this school has decided it needs.
+         */
+        SchoolFieldResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Help Text */
+            help_text: string | null;
+            kind: components["schemas"]["FieldKind"];
+            scope: components["schemas"]["FieldScope"];
+            /** Options */
+            options: string[] | null;
+            /** Required At Registration */
+            required_at_registration: boolean;
+            /** Is Sensitive */
+            is_sensitive: boolean;
+            /** Is Active */
+            is_active: boolean;
+            /** Sort Order */
+            sort_order: number;
+        };
+        /**
+         * SchoolFieldUpdateRequest
+         * @description Relabel a field, or retire it.
+         *
+         *     No key and no kind. Values already recorded are stored under that key and
+         *     typed by that kind, so changing either would reinterpret answers people
+         *     have already given.
+         */
+        SchoolFieldUpdateRequest: {
+            /** Label */
+            label?: string | null;
+            /** Help Text */
+            help_text?: string | null;
+            /** Options */
+            options?: string[] | null;
+            /** Required At Registration */
+            required_at_registration?: boolean | null;
+            /** Is Sensitive */
+            is_sensitive?: boolean | null;
+            /** Is Active */
+            is_active?: boolean | null;
+            /** Sort Order */
+            sort_order?: number | null;
+        };
         /** SchoolResponse */
         SchoolResponse: {
             /**
@@ -4377,6 +4553,21 @@ export interface components {
             /** Levels */
             levels?: components["schemas"]["SubjectLevelRequest"][];
         };
+        /**
+         * SubjectLevelOnSubject
+         * @description One level a subject is taught at, and how often.
+         */
+        SubjectLevelOnSubject: {
+            /**
+             * Level Id
+             * Format: uuid
+             */
+            level_id: string;
+            /** Level Name */
+            level_name: string;
+            /** Periods Per Week */
+            periods_per_week: number | null;
+        };
         /** SubjectLevelRequest */
         SubjectLevelRequest: {
             /**
@@ -4404,6 +4595,56 @@ export interface components {
             is_examinable: boolean;
             /** Is Active */
             is_active: boolean;
+        };
+        /**
+         * SubjectRowResponse
+         * @description A subject as the subjects screen lists it.
+         *
+         *     The levels come with the row because the screen shows them, and because
+         *     the periods per week belong to the subject-and-level pairing rather than
+         *     to the subject: Kiswahili at Standard 2 and at Standard 6 are one subject
+         *     against two syllabuses.
+         */
+        SubjectRowResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Is Core */
+            is_core: boolean;
+            /** Is Examinable */
+            is_examinable: boolean;
+            /** Is Active */
+            is_active: boolean;
+            /** Levels */
+            levels: components["schemas"]["SubjectLevelOnSubject"][];
+        };
+        /**
+         * SubjectUpdateRequest
+         * @description Rename a subject, move it, or retire it.
+         *
+         *     There is no delete. A report card from a closed year names its subjects,
+         *     so retiring one — `is_active: false` — keeps every old record and stops it
+         *     appearing on new mark sheets.
+         */
+        SubjectUpdateRequest: {
+            /** Code */
+            code?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Is Core */
+            is_core?: boolean | null;
+            /** Is Examinable */
+            is_examinable?: boolean | null;
+            /** Is Active */
+            is_active?: boolean | null;
+            /** Levels */
+            levels?: components["schemas"]["SubjectLevelRequest"][] | null;
         };
         /**
          * SuspensePayment
@@ -5196,6 +5437,109 @@ export interface operations {
             };
         };
     };
+    my_school_fields_api_v1_schools_me_fields_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolFieldResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_my_school_field_api_v1_schools_me_fields_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SchoolFieldCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolFieldResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_my_school_field_api_v1_schools_me_fields__field_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                field_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SchoolFieldUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolFieldResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_years_api_v1_academic_years_get: {
         parameters: {
             query?: never;
@@ -5831,7 +6175,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SubjectResponse"][];
+                    "application/json": components["schemas"]["SubjectRowResponse"][];
                 };
             };
             /** @description Validation Error */
@@ -5862,6 +6206,43 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_subject_api_v1_academic_subjects__subject_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                subject_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubjectUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

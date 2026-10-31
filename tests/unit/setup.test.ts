@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  arrearsSentence,
   beforeYearCanBeCurrent,
   classWarning,
+  depositSentence,
   exitSummary,
   fillLabel,
   fillState,
   goesOnTo,
+  graceSentence,
   teacherLoad,
+  teachingGaps,
   termProblems,
   yearIsEditable,
   yearState,
@@ -221,5 +225,71 @@ describe('what a teacher already holds', () => {
       'already has Standard 4 Blue · 3 subjects',
     );
     expect(teacherLoad({ className: null, subjectsTaught: 1 })).toBe('no class · 1 subject');
+  });
+});
+
+describe('subject and class pairs with nobody teaching them', () => {
+  const subjects = [
+    { id: 'kis', name: 'Kiswahili', levelIds: ['l2', 'l6'] },
+    { id: 'mat', name: 'Mathematics', levelIds: ['l2'] },
+  ];
+  const classes = [
+    { id: 'c2', name: 'Standard 2', levelId: 'l2' },
+    { id: 'c6', name: 'Standard 6', levelId: 'l6' },
+  ];
+
+  it('finds every pair nobody is assigned to', () => {
+    const gaps = teachingGaps({ subjects, classes, assigned: [] });
+    expect(gaps.map((gap) => `${gap.subjectName} in ${gap.className}`).sort()).toEqual([
+      'Kiswahili in Standard 2',
+      'Kiswahili in Standard 6',
+      'Mathematics in Standard 2',
+    ]);
+  });
+
+  it('does not invent a gap where the subject is not taught', () => {
+    // Mathematics is recorded at Standard 2 only. A school not teaching it in
+    // Standard 6 has not left a hole in Standard 6.
+    const gaps = teachingGaps({ subjects, classes, assigned: [] });
+    expect(gaps.some((gap) => gap.subjectName === 'Mathematics' && gap.className === 'Standard 6')).toBe(
+      false,
+    );
+  });
+
+  it('counts a filled pair as filled', () => {
+    const gaps = teachingGaps({
+      subjects,
+      classes,
+      assigned: [
+        { subjectId: 'kis', classGroupId: 'c2' },
+        { subjectId: 'mat', classGroupId: 'c2' },
+      ],
+    });
+    expect(gaps.map((gap) => gap.className)).toEqual(['Standard 6']);
+  });
+});
+
+describe('what a fee rule will actually do', () => {
+  it('says what an offer will ask a family for', () => {
+    expect(depositSentence(30)).toMatch(/30% of the first term/);
+  });
+
+  it('names both ways of getting the deposit wrong', () => {
+    // Nought fills seats that never pay; a hundred loses seats that would.
+    expect(depositSentence(0)).toMatch(/fills seats that never pay/);
+    expect(depositSentence(100)).toMatch(/loses places it would have filled/);
+  });
+
+  it('spells out a grace period of nothing', () => {
+    expect(graceSentence(0)).toMatch(/Nobody is ever not in arrears/);
+    expect(graceSentence(14)).toMatch(/14 days after the invoice is issued/);
+  });
+
+  it('says out loud what withholding results means', () => {
+    // The switch decides whether a child is shown their own marks because of
+    // money their parents owe. It should not read like a preference.
+    expect(arrearsSentence('results', true)).toMatch(/will not be shown their results/);
+    expect(arrearsSentence('results', false)).toMatch(/chased separately/);
+    expect(arrearsSentence('promotion', true)).toMatch(/in a year they have otherwise passed/);
   });
 });

@@ -225,3 +225,125 @@ export function useAddStream() {
     onSuccess: refresh,
   });
 }
+
+export type Subject = components['schemas']['SubjectRowResponse'];
+export type SchoolField = components['schemas']['SchoolFieldResponse'];
+export type NewField = components['schemas']['SchoolFieldCreateRequest'];
+export type TeachingAssignment = components['schemas']['TeachingAssignmentResponse'];
+
+export const useSubjects = () =>
+  useQuery({
+    queryKey: ['setup', 'subjects'],
+    queryFn: () => api<Subject[]>('/academic/subjects'),
+    staleTime: 5 * 60_000,
+  });
+
+export const useTeachingAssignments = (classGroupId: string | undefined) =>
+  useQuery({
+    queryKey: ['setup', 'assignments', classGroupId ?? 'all'],
+    queryFn: () =>
+      api<TeachingAssignment[]>(
+        classGroupId
+          ? `/academic/teaching-assignments?class_group_id=${classGroupId}`
+          : '/academic/teaching-assignments',
+      ),
+    staleTime: 60_000,
+  });
+
+export function useAddSubject() {
+  const refresh = useRefreshSetup();
+  return useMutation({
+    mutationFn: (body: {
+      code: string;
+      name: string;
+      is_core: boolean;
+      is_examinable: boolean;
+      levels: readonly { level_id: string; periods_per_week: number | null }[];
+    }) => api<Subject>('/academic/subjects', { method: 'POST', body: JSON.stringify(body) }),
+    onSuccess: refresh,
+  });
+}
+
+/**
+ * Renaming, moving or retiring a subject. There is no delete: a report card
+ * from a closed year names its subjects, so retiring one keeps every old
+ * record and stops it appearing on new mark sheets.
+ */
+export function useUpdateSubject(subjectId: string) {
+  const refresh = useRefreshSetup();
+  return useMutation({
+    mutationFn: (body: components['schemas']['SubjectUpdateRequest']) =>
+      api<Subject>(`/academic/subjects/${subjectId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: refresh,
+  });
+}
+
+export function useAssignTeaching() {
+  const refresh = useRefreshSetup();
+  return useMutation({
+    mutationFn: (body: { teacher_id: string; subject_id: string; class_group_id: string }) =>
+      api<TeachingAssignment>('/academic/teaching-assignments', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: refresh,
+  });
+}
+
+export function useUnassignTeaching() {
+  const refresh = useRefreshSetup();
+  return useMutation({
+    mutationFn: (assignmentId: string) =>
+      api<void>(`/academic/teaching-assignments/${assignmentId}`, { method: 'DELETE' }),
+    onSuccess: refresh,
+  });
+}
+
+export const useSchoolFields = () =>
+  useQuery({
+    queryKey: ['setup', 'fields'],
+    queryFn: () => api<SchoolField[]>('/schools/me/fields'),
+    staleTime: 5 * 60_000,
+  });
+
+export function useAddSchoolField() {
+  const refresh = useRefreshSetup();
+  return useMutation({
+    mutationFn: (body: NewField) =>
+      api<SchoolField>('/schools/me/fields', { method: 'POST', body: JSON.stringify(body) }),
+    onSuccess: refresh,
+  });
+}
+
+export function useUpdateSchoolField(fieldId: string) {
+  const refresh = useRefreshSetup();
+  return useMutation({
+    mutationFn: (body: components['schemas']['SchoolFieldUpdateRequest']) =>
+      api<SchoolField>(`/schools/me/fields/${fieldId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: refresh,
+  });
+}
+
+/** The school's own profile and the fee rules that change how it behaves. */
+export function useUpdateSchool() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: components['schemas']['SchoolUpdateRequest']) =>
+      api<components['schemas']['SchoolResponse']>('/schools/me', {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: schoolKeys.profile });
+      // The deposit and the grace period change what a new offer asks for.
+      void client.invalidateQueries({ queryKey: ['fees'] });
+      void client.invalidateQueries({ queryKey: ['admissions'] });
+    },
+  });
+}

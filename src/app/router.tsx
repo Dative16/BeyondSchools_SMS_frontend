@@ -34,6 +34,8 @@ const AdmitByHandPage = lazy(() => import('@/features/admissions/AdmitByHandPage
 const YearsPage = lazy(() => import('@/features/setup/YearsPage'));
 const LevelsPage = lazy(() => import('@/features/setup/LevelsPage'));
 const ClassesPage = lazy(() => import('@/features/setup/ClassesPage'));
+const SubjectsPage = lazy(() => import('@/features/setup/SubjectsPage'));
+const SchoolSettingsPage = lazy(() => import('@/features/setup/SchoolSettingsPage'));
 
 export const router = createBrowserRouter([
   {
@@ -60,6 +62,8 @@ export const router = createBrowserRouter([
           { path: 'setup/years', element: <YearsPage /> },
           { path: 'setup/levels', element: <LevelsPage /> },
           { path: 'setup/classes', element: <ClassesPage /> },
+          { path: 'setup/subjects', element: <SubjectsPage /> },
+          { path: 'setup/school', element: <SchoolSettingsPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

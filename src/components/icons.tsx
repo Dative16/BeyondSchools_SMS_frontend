@@ -101,6 +101,20 @@ export const ClassesIcon = (p: IconProps) => (
   </Icon>
 );
 
+export const SubjectsIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 4.5h5a2 2 0 012 2V16a1.6 1.6 0 00-1.6-1.6H4V4.5z" />
+    <path d="M16 4.5h-5a2 2 0 00-2 2V16a1.6 1.6 0 011.6-1.6H16V4.5z" />
+  </Icon>
+);
+
+export const SettingsIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="10" cy="10" r="2.5" />
+    <path d="M10 3v2M10 15v2M3 10h2M15 10h2M5.2 5.2l1.4 1.4M13.4 13.4l1.4 1.4M14.8 5.2l-1.4 1.4M6.6 13.4l-1.4 1.4" />
+  </Icon>
+);
+
 export const BellIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M10 3a4.5 4.5 0 00-4.5 4.5c0 3-1.5 4-1.5 4h12s-1.5-1-1.5-4A4.5 4.5 0 0010 3zM8.5 15a1.6 1.6 0 003 0" />

@@ -225,3 +225,90 @@ export function teacherLoad(teacher: {
   ];
   return parts.join(' · ');
 }
+
+// ---------------------------------------------------------------------------
+// Who teaches what
+// ---------------------------------------------------------------------------
+
+export interface TeachingGap {
+  readonly subjectId: string;
+  readonly subjectName: string;
+  readonly classGroupId: string;
+  readonly className: string;
+}
+
+/**
+ * Subject-and-class pairs with nobody teaching them.
+ *
+ * Worth computing rather than eyeballing: nobody can enter a mark for a pair
+ * with no teacher, and the pupils in it have no lesson. A school finds that
+ * out when the first mark sheet of the term will not open, which is three
+ * weeks too late.
+ *
+ * Only subjects actually taught at the class's level count. A school that
+ * teaches Kiswahili in Standard 2 and not in Pre-primary has not left a gap
+ * in Pre-primary.
+ */
+export function teachingGaps(facts: {
+  readonly subjects: readonly { readonly id: string; readonly name: string; readonly levelIds: readonly string[] }[];
+  readonly classes: readonly { readonly id: string; readonly name: string; readonly levelId: string }[];
+  readonly assigned: readonly { readonly subjectId: string; readonly classGroupId: string }[];
+}): TeachingGap[] {
+  const covered = new Set(
+    facts.assigned.map((each) => `${each.subjectId}:${each.classGroupId}`),
+  );
+  const gaps: TeachingGap[] = [];
+
+  for (const group of facts.classes) {
+    for (const subject of facts.subjects) {
+      if (!subject.levelIds.includes(group.levelId)) continue;
+      if (covered.has(`${subject.id}:${group.id}`)) continue;
+      gaps.push({
+        subjectId: subject.id,
+        subjectName: subject.name,
+        classGroupId: group.id,
+        className: group.name,
+      });
+    }
+  }
+  return gaps;
+}
+
+// ---------------------------------------------------------------------------
+// What a fee rule will actually do
+// ---------------------------------------------------------------------------
+
+/**
+ * These three exist because a number in a box is not a decision.
+ *
+ * "Deposit: 30" tells a school admin nothing about what a family will be asked
+ * for, and the two arrears switches decide whether a child's report card is
+ * withheld over money their parents owe. Each returns the sentence the screen
+ * puts under the input, so the consequence is read before the change is saved.
+ */
+export function depositSentence(percent: number): string {
+  if (!Number.isFinite(percent) || percent < 0) return 'Enter a percentage between 0 and 100.';
+  if (percent === 0)
+    return 'No deposit is asked for. A place is held with nothing paid, which fills seats that never pay.';
+  if (percent >= 100)
+    return 'The whole first term is asked for up front. A school that does this loses places it would have filled.';
+  return `An offer asks for ${percent}% of the first term's fees, plus the one-off joining charges in full.`;
+}
+
+export function graceSentence(days: number): string {
+  if (!Number.isFinite(days) || days < 0) return 'Enter a number of days.';
+  if (days === 0)
+    return 'A balance counts as arrears the day it is issued. Nobody is ever not in arrears.';
+  return `A balance counts as arrears ${days} days after the invoice is issued.`;
+}
+
+export function arrearsSentence(what: 'results' | 'promotion', on: boolean): string {
+  if (what === 'results') {
+    return on
+      ? 'A child whose family is in arrears will not be shown their results or given a report card.'
+      : 'Results are shown whatever is owed. Fees are chased separately.';
+  }
+  return on
+      ? 'A child whose family is in arrears will be held back by the promotion run, in a year they have otherwise passed.'
+      : 'Promotion ignores what is owed. A child moves up on their work.';
+}

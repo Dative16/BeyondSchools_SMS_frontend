@@ -23,7 +23,9 @@ import {
   FeesIcon,
   HomeworkIcon,
   LadderIcon,
+  SettingsIcon,
   StudentsIcon,
+  SubjectsIcon,
   TimetableIcon,
 } from '@/components/icons';
 
@@ -95,6 +97,18 @@ export const NAV: readonly NavGroup[] = [
         label: 'Classes',
         icon: ClassesIcon,
         permission: 'academic:manage',
+      },
+      {
+        to: '/setup/subjects',
+        label: 'Subjects',
+        icon: SubjectsIcon,
+        permission: 'academic:manage',
+      },
+      {
+        to: '/setup/school',
+        label: 'School settings',
+        icon: SettingsIcon,
+        permission: 'school:manage',
       },
     ],
   },
