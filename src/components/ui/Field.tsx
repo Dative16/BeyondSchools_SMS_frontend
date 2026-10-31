@@ -90,6 +90,42 @@ export function TextInput({
   );
 }
 
+/**
+ * A file input, inside a `Field` like any other control.
+ *
+ * It exists because a raw `<input type="file">` dropped into a `Field` gets no
+ * id — only the controls that read this context do — so the label `Field`
+ * renders points at nothing and a screen reader cannot find the input at all.
+ * That was true of the document upload until a test went looking for it.
+ *
+ * Styled as a button rather than left to the browser, because the native
+ * control renders differently in every browser and is unreadably small on a
+ * phone.
+ */
+export function FileInput({
+  className = '',
+  ...rest
+}: Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'className' | 'type'> & {
+  readonly className?: string;
+}) {
+  const { id, describedBy, invalid } = useField();
+  return (
+    <input
+      id={id || undefined}
+      type="file"
+      aria-describedby={describedBy}
+      aria-invalid={invalid || undefined}
+      className={
+        'w-full rounded-control border bg-white p-2.5 text-sm ' +
+        'file:mr-3 file:min-h-9 file:rounded-control file:border file:border-line ' +
+        'file:bg-canvas file:px-3 file:text-[13px] file:font-medium file:text-ink ' +
+        `${invalid ? 'border-bad-ink' : 'border-line'} ${className}`
+      }
+      {...rest}
+    />
+  );
+}
+
 export function Select({
   className = '',
   children,

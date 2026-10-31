@@ -6,7 +6,7 @@ export { DataTable } from './DataTable';
 export { Dialog } from './Dialog';
 export type { Column } from './DataTable';
 export { EmptyState, ErrorState, Notice } from './EmptyState';
-export { Field, Select, TextInput } from './Field';
+export { Field, FileInput, Select, TextInput } from './Field';
 export { CountBadge, Pill } from './Pill';
 export type { Tone } from './Pill';
 export { StatTile, Unit } from './StatTile';

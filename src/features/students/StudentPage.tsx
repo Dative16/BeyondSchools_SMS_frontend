@@ -9,17 +9,20 @@
  * child is asthmatic is the gap that matters on a sports afternoon.
  */
 
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { useChecklist, useStatement, useStudent } from '@/api/queries/student';
 import { ChevronDownIcon } from '@/components/icons';
-import { Card, CardHeader, ErrorState, Pill } from '@/components/ui';
+import { Button, Card, ErrorState, Pill } from '@/components/ui';
 import { ageLabel, initialsOf, statusPill } from '@/domain/student';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { longDate } from '@/lib/format';
 
+import { ChangeClassDialog } from './components/ChangeClassDialog';
 import { EnrolmentHistory } from './components/EnrolmentHistory';
 import { FeesCard } from './components/FeesCard';
+import { ProfilePanels } from './components/ProfilePanels';
 import { GuardiansCard } from './components/GuardiansCard';
 import { MedicalCard } from './components/MedicalCard';
 import { MissingCard } from './components/MissingCard';
@@ -29,6 +32,8 @@ import { StudentActions } from './components/StudentActions';
 export default function StudentPage() {
   const { studentId = '' } = useParams();
   const { can } = useAuth();
+
+  const [moving, setMoving] = useState(false);
 
   const profile = useStudent(studentId);
   const statement = useStatement(studentId, can('invoice:read'));
@@ -65,6 +70,7 @@ export default function StudentPage() {
   }
 
   const { student, enrolment, class_name, history, guardians, health } = profile.data;
+  const fieldValues = profile.data.field_values;
   const status = statusPill(student.status);
   const today = new Date();
 
@@ -118,13 +124,31 @@ export default function StudentPage() {
         </div>
       </Card>
 
+      <div className="mb-4.5">
+        <ProfilePanels
+          studentId={studentId}
+          guardians={guardians}
+          fieldValues={fieldValues}
+        />
+      </div>
+
       <div className="flex flex-wrap gap-4.5">
         <div className="min-w-0 flex-[1.3_1_400px]">
           <Card>
-            <CardHeader
-              title="Enrolment history"
-              note="One row per academic year. Promotion writes a new row rather than changing this one, so every report card stays reachable."
-            />
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="m-0 font-display text-[15px] font-semibold">Enrolment history</h2>
+                <p className="mt-1 mb-0 text-[12.5px] text-muted">
+                  One row per academic year. Promotion writes a new row rather than changing this
+                  one, so every report card stays reachable.
+                </p>
+              </div>
+              {enrolment && can('student:manage') ? (
+                <Button size="sm" onClick={() => setMoving(true)}>
+                  Change class
+                </Button>
+              ) : null}
+            </div>
             <EnrolmentHistory rows={history} />
           </Card>
         </div>
@@ -153,6 +177,21 @@ export default function StudentPage() {
           />
         </div>
       </div>
+
+      {enrolment ? (
+        <ChangeClassDialog
+          open={moving}
+          onClose={() => setMoving(false)}
+          studentId={studentId}
+          enrolment={{
+            id: enrolment.id,
+            academic_year_id: enrolment.academic_year_id,
+            class_group_id: enrolment.class_group_id,
+            residency: enrolment.residency,
+            uses_transport: enrolment.uses_transport,
+          }}
+        />
+      ) : null}
     </>
   );
 }
