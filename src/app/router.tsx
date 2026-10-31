@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 
 import { NotFoundPage } from '@/app/Placeholder';
+import { FamilyOnly, RoleShell, StaffOnly } from '@/app/Shells';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 
 /**
@@ -17,11 +18,13 @@ import { RequireAuth } from '@/features/auth/RequireAuth';
  * lands; the routes exist now so the nav, the guard and the lazy boundaries are
  * real rather than theoretical.
  */
-const AppShell = lazy(() => import('@/app/AppShell'));
+const DashboardOrHome = lazy(() => import('@/app/Home'));
+const ChildPage = lazy(() => import('@/features/portal/ChildPage'));
+const StatementPage = lazy(() => import('@/features/portal/StatementPage'));
+const MyAccountPage = lazy(() => import('@/features/portal/MyAccountPage'));
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
 const SetPasswordPage = lazy(() => import('@/features/auth/SetPasswordPage'));
 const ForgotPasswordPage = lazy(() => import('@/features/auth/ForgotPasswordPage'));
-const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
 const StudentsPage = lazy(() => import('@/features/students/StudentsPage'));
 const StudentPage = lazy(() => import('@/features/students/StudentPage'));
 const ApplyPage = lazy(() => import('@/features/apply/ApplyPage'));
@@ -43,27 +46,141 @@ export const router = createBrowserRouter([
     element: <RequireAuth />,
     children: [
       {
-        element: <AppShell />,
+        // Staff get the staff shell; a guardian or a pupil gets the portal.
+        // Every signed-in route used to sit under the staff shell, which is
+        // how a guardian who set a password landed on the staff dashboard.
+        element: <RoleShell />,
         children: [
-          { index: true, element: <DashboardPage /> },
-          { path: 'students', element: <StudentsPage /> },
+          { index: true, element: <DashboardOrHome /> },
+
+          // The family's own screens. A member of staff following one of
+          // these links is sent home rather than shown a page that refuses.
+          {
+            path: 'children/:studentId',
+            element: (
+              <FamilyOnly>
+                <ChildPage />
+              </FamilyOnly>
+            ),
+          },
+          {
+            path: 'children/:studentId/statement',
+            element: (
+              <FamilyOnly>
+                <StatementPage />
+              </FamilyOnly>
+            ),
+          },
+          { path: 'me', element: <MyAccountPage /> },
+          {
+            path: 'students',
+            element: (
+              <StaffOnly>
+                <StudentsPage />
+              </StaffOnly>
+            ),
+          },
           // Before the :studentId route: "new" is not a student id. This is
           // where the "Admit a child" button on three screens has always
           // pointed, and until now there was nothing here.
-          { path: 'students/new', element: <AdmitByHandPage /> },
-          { path: 'students/:studentId', element: <StudentPage /> },
-          { path: 'admissions', element: <AdmissionsPage /> },
-          { path: 'admissions/:applicationId', element: <ApplicationPage /> },
-          { path: 'fees', element: <FeesPage /> },
+          {
+            path: 'students/new',
+            element: (
+              <StaffOnly>
+                <AdmitByHandPage />
+              </StaffOnly>
+            ),
+          },
+          {
+            path: 'students/:studentId',
+            element: (
+              <StaffOnly>
+                <StudentPage />
+              </StaffOnly>
+            ),
+          },
+          {
+            path: 'admissions',
+            element: (
+              <StaffOnly>
+                <AdmissionsPage />
+              </StaffOnly>
+            ),
+          },
+          {
+            path: 'admissions/:applicationId',
+            element: (
+              <StaffOnly>
+                <ApplicationPage />
+              </StaffOnly>
+            ),
+          },
+          {
+            path: 'fees',
+            element: (
+              <StaffOnly>
+                <FeesPage />
+              </StaffOnly>
+            ),
+          },
           // Before the invoice route, and it has to stay there: both sit one
           // segment under /fees, and "structures" is not an invoice id.
-          { path: 'fees/structures/:structureId', element: <FeeStructureEditorPage /> },
-          { path: 'fees/:invoiceId', element: <InvoicePage /> },
-          { path: 'setup/years', element: <YearsPage /> },
-          { path: 'setup/levels', element: <LevelsPage /> },
-          { path: 'setup/classes', element: <ClassesPage /> },
-          { path: 'setup/subjects', element: <SubjectsPage /> },
-          { path: 'setup/school', element: <SchoolSettingsPage /> },
+          {
+            path: 'fees/structures/:structureId',
+            element: (
+              <StaffOnly>
+                <FeeStructureEditorPage />
+              </StaffOnly>
+            ),
+          },
+          {
+            path: 'fees/:invoiceId',
+            element: (
+              <StaffOnly>
+                <InvoicePage />
+              </StaffOnly>
+            ),
+          },
+          {
+            path: 'setup/years',
+            element: (
+              <StaffOnly>
+                <YearsPage />
+              </StaffOnly>
+            ),
+          },
+          {
+            path: 'setup/levels',
+            element: (
+              <StaffOnly>
+                <LevelsPage />
+              </StaffOnly>
+            ),
+          },
+          {
+            path: 'setup/classes',
+            element: (
+              <StaffOnly>
+                <ClassesPage />
+              </StaffOnly>
+            ),
+          },
+          {
+            path: 'setup/subjects',
+            element: (
+              <StaffOnly>
+                <SubjectsPage />
+              </StaffOnly>
+            ),
+          },
+          {
+            path: 'setup/school',
+            element: (
+              <StaffOnly>
+                <SchoolSettingsPage />
+              </StaffOnly>
+            ),
+          },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

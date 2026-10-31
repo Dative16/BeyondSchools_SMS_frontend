@@ -3870,6 +3870,8 @@ export interface components {
              * @default false
              */
             must_change_password: boolean;
+            /** Phone */
+            phone?: string | null;
         };
         /**
          * QueueRowResponse
@@ -4252,6 +4254,12 @@ export interface components {
             arrears_blocks_promotion: boolean;
             /** Arrears Threshold */
             arrears_threshold: string | null;
+            /** Bank Name */
+            bank_name: string | null;
+            /** Bank Account Name */
+            bank_account_name: string | null;
+            /** Bank Account Number */
+            bank_account_number: string | null;
         };
         /**
          * SchoolUpdateRequest
@@ -4301,6 +4309,12 @@ export interface components {
             arrears_blocks_promotion?: boolean | null;
             /** Arrears Threshold */
             arrears_threshold?: number | string | null;
+            /** Bank Name */
+            bank_name?: string | null;
+            /** Bank Account Name */
+            bank_account_name?: string | null;
+            /** Bank Account Number */
+            bank_account_number?: string | null;
         };
         /** ScreenRequest */
         ScreenRequest: {
